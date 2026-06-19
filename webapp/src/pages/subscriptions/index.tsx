@@ -53,16 +53,14 @@ export default function NewSubscription() {
       <Head>
         <title>New orbit - Orbit</title>
       </Head>
-      <AppShell>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.title}>Create orbit</h1>
-          <p className={styles.subtitle}>Describe what you want to track — the query is built automatically.</p>
-        </div>
-
+      <AppShell
+        title="Create orbit"
+        subtitle="Describe what you want to track — the query is built automatically."
+      >
         {loading ? (
           <p className={styles.muted}>Loading…</p>
         ) : !isAuthed ? (
-          <p className={styles.muted}>Connect your wallet and sign in from the header first.</p>
+          <p className={styles.muted}>Connect your wallet from the header to get started.</p>
         ) : (
           <>
             <p className={styles.templatesLabel}>Quick start</p>

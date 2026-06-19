@@ -37,12 +37,10 @@ export default function Connect() {
       <Head>
         <title>Connect Telegram - Orbit</title>
       </Head>
-      <AppShell>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>Connect Telegram</h1>
-          <p className={styles.pageSubtitle}>Link your account to receive alerts and daily digests.</p>
-        </div>
-
+      <AppShell
+        title="Connect Telegram"
+        subtitle="Link your account to receive alerts and daily digests."
+      >
         <div className={styles.steps}>
           <div className={`${styles.step} ${isAuthed ? styles.stepDone : styles.stepActive}`}>
             <span className={styles.stepNum}>1</span>
@@ -61,8 +59,8 @@ export default function Connect() {
             <p className={styles.muted}>Loading…</p>
           ) : !isAuthed ? (
             <EmptyState
-              title="Sign in first"
-              description="Connect your wallet and sign in from the header, then return here to link Telegram."
+              title="Connect your wallet"
+              description="Connect your wallet from the header — signing in happens automatically — then return here to link Telegram."
             />
           ) : (
             <>

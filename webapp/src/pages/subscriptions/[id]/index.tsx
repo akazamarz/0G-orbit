@@ -52,7 +52,7 @@ export default function SubscriptionDetail() {
 
   if (!sub) {
     return (
-      <AppShell>
+      <AppShell title="Loading…">
         <p className={styles.loading}>Loading…</p>
       </AppShell>
     );
@@ -63,9 +63,9 @@ export default function SubscriptionDetail() {
       <Head>
         <title>{sub.intent.slice(0, 40)} - Orbit</title>
       </Head>
-      <AppShell>
-        <header className={styles.header}>
-          <h1 className={styles.title}>{sub.intent}</h1>
+      <AppShell
+        title={sub.intent}
+        subtitle={
           <div className={styles.badges}>
             <span className={styles.badge}>{sub.watchType}</span>
             <span className={styles.badge}>{sub.mode}</span>
@@ -73,17 +73,19 @@ export default function SubscriptionDetail() {
               {sub.paused ? "Paused" : "Active"}
             </span>
           </div>
-          <code className={styles.query}>{sub.generatedQuery}</code>
-        </header>
-
-        <div className={styles.controls}>
-          <button type="button" className={styles.btn} onClick={() => void togglePause()}>
-            {sub.paused ? "Resume" : "Pause"}
-          </button>
-          <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => void remove()}>
-            Delete
-          </button>
-        </div>
+        }
+        actions={
+          <>
+            <button type="button" className={styles.btn} onClick={() => void togglePause()}>
+              {sub.paused ? "Resume" : "Pause"}
+            </button>
+            <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => void remove()}>
+              Delete
+            </button>
+          </>
+        }
+      >
+        <code className={styles.query}>{sub.generatedQuery}</code>
 
         <section className={styles.alerts}>
           <h2 className={styles.heading}>Alerts ({alerts.length})</h2>

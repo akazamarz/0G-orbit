@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { zgGalileo } from "@/lib/chains";
 import { ToastProvider } from "@/components/Toast";
+import { SessionProvider } from "@/contexts/SessionContext";
 import styles from "./index.module.css";
 
 function createWagmiConfig() {
@@ -40,7 +41,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
             fontStack: "system",
           })}
         >
-          <ToastProvider>{children}</ToastProvider>
+          <SessionProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </SessionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

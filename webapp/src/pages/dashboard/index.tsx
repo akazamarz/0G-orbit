@@ -86,35 +86,40 @@ export default function Dashboard() {
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
 
+  const headerSubtitle =
+    isAuthed && !sessionLoading
+      ? `${subs.length} orbit${subs.length !== 1 ? "s" : ""} · ${alerts.length} alert${alerts.length !== 1 ? "s" : ""}${
+          pendingCount > 0
+            ? ` · ${pendingCount} pending attestation${pendingCount !== 1 ? "s" : ""}`
+            : ""
+        }`
+      : undefined;
+
   return (
     <>
       <Head>
         <title>Dashboard - Orbit</title>
       </Head>
-      <AppShell>
+      <AppShell
+        title="Dashboard"
+        subtitle={headerSubtitle}
+        actions={
+          isAuthed && !sessionLoading ? (
+            <Link href="/subscriptions" className={styles.createBtn}>
+              + New orbit
+            </Link>
+          ) : undefined
+        }
+      >
         {sessionLoading ? (
           <div className={styles.loading}>Loading…</div>
         ) : !isAuthed ? (
           <EmptyState
             title="Connect your wallet"
-            description="Use the Connect Wallet button in the header, then sign in with Ethereum to access your dashboard."
+            description="Click Connect Wallet in the header — you'll be asked to sign once to verify ownership, then you're in."
           />
         ) : (
           <>
-            <div className={styles.top}>
-              <div>
-                <h1 className={styles.title}>Dashboard</h1>
-                <p className={styles.subtitle}>
-                  {subs.length} orbit{subs.length !== 1 ? "s" : ""} · {alerts.length} alert
-                  {alerts.length !== 1 ? "s" : ""}
-                  {pendingCount > 0 && ` · ${pendingCount} pending attestation${pendingCount !== 1 ? "s" : ""}`}
-                </p>
-              </div>
-              <Link href="/subscriptions" className={styles.createBtn}>
-                + New orbit
-              </Link>
-            </div>
-
             <section className={styles.section}>
               <h2 className={styles.heading}>Your orbits</h2>
               {dataLoading ? (

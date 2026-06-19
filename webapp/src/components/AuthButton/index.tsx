@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect, useSignMessage } from "wagmi";
-import { SiweMessage } from "siwe";
 import { ZG_CHAIN } from "@orbit/shared";
 import { useSession } from "@/hooks/useSession";
+import { signInWithWallet } from "@/lib/siwe-client";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
 
@@ -17,50 +17,53 @@ export function AuthButton({ onAuthed }: Props) {
   const { signMessageAsync } = useSignMessage();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
-  const [signingIn, setSigningIn] = useState(false);
+  const [signInDeclined, setSignInDeclined] = useState(false);
+  const wasConnected = useRef(false);
+  const signingRef = useRef(false);
 
-  async function handleSignIn() {
-    if (!address) return;
-    setSigningIn(true);
+  const wrongChain = isConnected && chain && chain.id !== ZG_CHAIN.chainId;
+  const sessionMatches =
+    Boolean(address && sessionWallet) &&
+    address!.toLowerCase() === sessionWallet!.toLowerCase();
+  const needsSignIn = isConnected && address && !sessionMatches && !sessionLoading;
+
+  const handleSignIn = useCallback(async () => {
+    if (!address || signingRef.current || wrongChain) return false;
+    signingRef.current = true;
+    setSignInDeclined(false);
     try {
-      const nonceRes = await fetch("/api/auth/nonce");
-      if (!nonceRes.ok) throw new Error("Could not get sign-in nonce");
-      const { nonce } = (await nonceRes.json()) as { nonce: string };
-
-      const message = new SiweMessage({
-        domain: window.location.host,
-        address,
-        statement: "Sign in to Orbit",
-        uri: window.location.origin,
-        version: "1",
-        chainId: ZG_CHAIN.chainId,
-        nonce,
-      }).toMessage();
-
-      const signature = await signMessageAsync({ message });
-      const verifyRes = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message, signature }),
-      });
-
-      if (!verifyRes.ok) {
-        const body = (await verifyRes.json()) as { error?: string };
-        throw new Error(body.error ?? "Sign-in failed");
-      }
-
+      await signInWithWallet(address, (args) => signMessageAsync(args));
       await refresh();
       onAuthed?.(address);
-      toast("Signed in successfully", "success");
+      return true;
     } catch (err) {
       const msg = (err as Error).message;
-      if (!msg.toLowerCase().includes("rejected")) {
+      if (msg.toLowerCase().includes("rejected")) {
+        setSignInDeclined(true);
+      } else {
         toast(msg, "error");
       }
+      return false;
     } finally {
-      setSigningIn(false);
+      signingRef.current = false;
     }
-  }
+  }, [address, wrongChain, signMessageAsync, refresh, onAuthed, toast]);
+
+  useEffect(() => {
+    if (!needsSignIn || signInDeclined || wrongChain) return;
+    void handleSignIn();
+  }, [needsSignIn, signInDeclined, wrongChain, handleSignIn]);
+
+  useEffect(() => {
+    setSignInDeclined(false);
+  }, [address]);
+
+  useEffect(() => {
+    if (wasConnected.current && !isConnected) {
+      void signOut();
+    }
+    wasConnected.current = isConnected;
+  }, [isConnected, signOut]);
 
   async function handleSignOut() {
     await signOut();
@@ -68,40 +71,28 @@ export function AuthButton({ onAuthed }: Props) {
     toast("Signed out", "info");
   }
 
-  const wrongChain = isConnected && chain && chain.id !== ZG_CHAIN.chainId;
-  const needsSignIn = isConnected && address && !sessionWallet && !sessionLoading;
-  const isAuthed = Boolean(sessionWallet);
-
   return (
     <div className={styles.wrap}>
       {wrongChain && (
         <span className={styles.chainWarn}>Switch to {ZG_CHAIN.name}</span>
       )}
 
-      {isAuthed ? (
-        <div className={styles.authed}>
-          <span className={styles.address}>
-            {sessionWallet!.slice(0, 6)}…{sessionWallet!.slice(-4)}
-          </span>
-          <button type="button" className={styles.signOut} onClick={() => void handleSignOut()}>
-            Sign out
-          </button>
-        </div>
-      ) : needsSignIn ? (
-        <button
-          type="button"
-          className={styles.signIn}
-          onClick={() => void handleSignIn()}
-          disabled={signingIn || Boolean(wrongChain)}
-        >
-          {signingIn ? "Signing…" : "Sign in"}
+      {signInDeclined && needsSignIn && (
+        <button type="button" className={styles.retry} onClick={() => void handleSignIn()}>
+          Retry sign-in
         </button>
-      ) : null}
+      )}
+
+      {sessionMatches && (
+        <button type="button" className={styles.signOut} onClick={() => void handleSignOut()}>
+          Sign out
+        </button>
+      )}
 
       <ConnectButton
         showBalance={false}
         chainStatus={wrongChain ? "icon" : "none"}
-        accountStatus={isAuthed ? "avatar" : "address"}
+        accountStatus={sessionMatches ? "avatar" : "address"}
       />
     </div>
   );
