@@ -1,6 +1,10 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { EmptyState } from "@/components/EmptyState";
+import { useSession } from "@/hooks/useSession";
+import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
 
 interface LinkResult {
@@ -9,46 +13,80 @@ interface LinkResult {
 }
 
 export default function Connect() {
-  const [authed, setAuthed] = useState(false);
+  const { isAuthed, loading } = useSession();
+  const { toast } = useToast();
   const [link, setLink] = useState<LinkResult | null>(null);
-
-  useEffect(() => {
-    void fetch("/api/auth/session")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setAuthed(true));
-  }, []);
+  const [busy, setBusy] = useState(false);
 
   async function getDeeplink() {
-    const res = await fetch("/api/telegram/link", { method: "POST" });
-    setLink((await res.json()) as LinkResult);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/telegram/link", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to generate link");
+      setLink((await res.json()) as LinkResult);
+      toast("Telegram link generated", "success");
+    } catch (err) {
+      toast((err as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <>
       <Head>
-        <title>Connect Telegram — Orbit</title>
+        <title>Connect Telegram - Orbit</title>
       </Head>
-      <main className={styles.page}>
-        <Link href="/dashboard" className={styles.back}>
-          ← Dashboard
-        </Link>
+      <AppShell>
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Connect Telegram</h1>
+          <p className={styles.pageSubtitle}>Link your account to receive alerts and daily digests.</p>
+        </div>
+
+        <div className={styles.steps}>
+          <div className={`${styles.step} ${isAuthed ? styles.stepDone : styles.stepActive}`}>
+            <span className={styles.stepNum}>1</span>
+            <span>Wallet</span>
+          </div>
+          <div className={styles.stepLine} />
+          <div className={`${styles.step} ${link ? styles.stepDone : isAuthed ? styles.stepActive : ""}`}>
+            <span className={styles.stepNum}>2</span>
+            <span>Telegram</span>
+          </div>
+        </div>
+
         <div className={styles.card}>
-          <h1>Connect Telegram</h1>
-          {!authed ? (
-            <p className={styles.muted}>Sign in with your wallet first.</p>
+          <h2 className={styles.title}>Generate link</h2>
+          {loading ? (
+            <p className={styles.muted}>Loading…</p>
+          ) : !isAuthed ? (
+            <EmptyState
+              title="Sign in first"
+              description="Connect your wallet and sign in from the header, then return here to link Telegram."
+            />
           ) : (
             <>
-              <p>Link your Telegram to receive orbit alerts.</p>
-              <button onClick={getDeeplink}>Generate link</button>
+              <p className={styles.desc}>
+                Link your Telegram account to receive live alerts and daily digests from your orbits.
+              </p>
+              <button type="button" className={styles.btn} onClick={() => void getDeeplink()} disabled={busy}>
+                {busy ? "Generating…" : "Generate Telegram link"}
+              </button>
               {link && (
-                <a className={styles.deeplink} href={link.deeplink} target="_blank" rel="noopener noreferrer">
-                  Open Telegram
-                </a>
+                <div className={styles.linkBox}>
+                  <p className={styles.hint}>Link expires in 10 minutes. Tap below to open Telegram.</p>
+                  <a className={styles.deeplink} href={link.deeplink} target="_blank" rel="noopener noreferrer">
+                    Open in Telegram
+                  </a>
+                </div>
               )}
+              <Link href="/subscriptions" className={styles.secondary}>
+                Create an orbit →
+              </Link>
             </>
           )}
         </div>
-      </main>
+      </AppShell>
     </>
   );
 }

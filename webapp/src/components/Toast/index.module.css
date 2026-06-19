@@ -1,0 +1,48 @@
+.container {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 360px;
+}
+
+.toast {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.2s ease-out;
+}
+
+.success {
+  background: #14532d;
+  border: 1px solid var(--success);
+  color: #bbf7d0;
+}
+
+.error {
+  background: #450a0a;
+  border: 1px solid var(--danger);
+  color: #fecaca;
+}
+
+.info {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

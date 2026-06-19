@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { loadEnvFile } from "./load-env.js";
 
 const envSchema = z.object({
   AI_BASE_URL: z.string().url(),
@@ -49,7 +48,6 @@ let cached: Env | null = null;
 
 export function loadConfig(source?: Record<string, string | undefined>): Env {
   if (cached) return cached;
-  loadEnvFile();
   const parsed = envSchema.safeParse(source ?? process.env);
   if (!parsed.success) {
     const issues = parsed.error.issues

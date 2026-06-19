@@ -33,7 +33,7 @@ export async function sendDigest(
   alerts: Alert[],
 ): Promise<void> {
   const lines = [
-    `📋 Orbit Daily Digest — ${alerts.length} signals`,
+    `📋 Orbit Daily Digest - ${alerts.length} signals`,
     ``,
     briefing,
     ``,

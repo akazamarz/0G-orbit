@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useSignTypedData, useAccount } from "wagmi";
 import styles from "./index.module.css";
 import type { EIP712Domain, PendingAttestation } from "@orbit/shared";
 import { ZG_CHAIN } from "@orbit/shared";
-import { signAttestation } from "@/lib/0g/attestation";
+import { ATTESTATION_TYPES } from "@/lib/attestation-types";
+import { useToast } from "@/components/Toast";
 
 interface Props {
   pending: PendingAttestation[];
@@ -11,20 +13,37 @@ interface Props {
 }
 
 export function PendingAttestations({ pending, domain, onAttested }: Props) {
+  const { isConnected } = useAccount();
+  const { signTypedDataAsync } = useSignTypedData();
+  const { toast } = useToast();
   const [signing, setSigning] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [successTx, setSuccessTx] = useState<string | null>(null);
 
   if (pending.length === 0) return null;
 
   async function handleSign(att: PendingAttestation) {
     if (!domain) return;
-    setSigning(att.id);
-    setError(null);
-    setSuccessTx(null);
+    if (!isConnected) {
+      toast("Connect your wallet first", "error");
+      return;
+    }
 
+    setSigning(att.id);
     try {
-      const signature = await signAttestation(domain, att.contentHash, att.storageRoot, att.deadline);
+      const signature = await signTypedDataAsync({
+        domain: {
+          name: domain.name,
+          version: domain.version,
+          chainId: BigInt(domain.chainId),
+          verifyingContract: domain.verifyingContract as `0x${string}`,
+        },
+        types: ATTESTATION_TYPES,
+        primaryType: "AttestationRequest",
+        message: {
+          contentHash: att.contentHash as `0x${string}`,
+          storageRoot: att.storageRoot,
+          deadline: BigInt(att.deadline),
+        },
+      });
 
       const res = await fetch("/api/attestations/sign", {
         method: "POST",
@@ -36,15 +55,21 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
           signature,
         }),
       });
+
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "attestation failed");
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Attestation failed");
       }
-      const result = await res.json();
-      setSuccessTx(result.txHash);
+
+      const result = (await res.json()) as { txHash: string };
+      toast("Attestation confirmed on-chain", "success");
       onAttested();
+      window.open(`${ZG_CHAIN.explorer}/tx/${result.txHash}`, "_blank");
     } catch (err) {
-      setError((err as Error).message);
+      const msg = (err as Error).message;
+      if (!msg.toLowerCase().includes("rejected")) {
+        toast(msg, "error");
+      }
     } finally {
       setSigning(null);
     }
@@ -71,16 +96,17 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
             </div>
             <p className={styles.briefing}>{att.briefing}</p>
             <div className={styles.meta}>
-              <span className={styles.hash}>root: {att.storageRoot.slice(0, 12)}...</span>
+              <span className={styles.hash}>root: {att.storageRoot.slice(0, 16)}…</span>
             </div>
 
             {isPending && (
               <button
+                type="button"
                 className={styles.signBtn}
                 onClick={() => void handleSign(att)}
                 disabled={signing === att.id}
               >
-                {signing === att.id ? "Sign in MetaMask..." : "Attest on-chain"}
+                {signing === att.id ? "Confirm in wallet…" : "Attest on-chain"}
               </button>
             )}
 
@@ -91,22 +117,9 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                View on explorer
+                View on explorer →
               </a>
             )}
-
-            {successTx && signing === null && (
-              <a
-                className={styles.txLink}
-                href={`${ZG_CHAIN.explorer}/tx/${successTx}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Attested! View on explorer
-              </a>
-            )}
-
-            {error && signing === null && <p className={styles.error}>{error}</p>}
           </article>
         );
       })}
