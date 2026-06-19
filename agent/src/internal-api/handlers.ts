@@ -65,10 +65,11 @@ export function handleListSubscriptions(wallet: string): Subscription[] {
 export function handleCreateTelegramLink(wallet: string): { nonce: string; deeplink: string } {
   const nonce = createLinkNonce(wallet);
   const config = loadConfig();
-  const botToken = config.TELEGRAM_BOT_TOKEN;
-  const [botId] = botToken.split(":");
-  const deeplink = `https://t.me/BOTNAME?start=${nonce}`.replace("BOTNAME", botId);
-  return { nonce, deeplink };
+  const username = config.TELEGRAM_BOT_USERNAME.replace(/^@/, "");
+  return {
+    nonce,
+    deeplink: `https://t.me/${username}?start=${nonce}`,
+  };
 }
 
 export function handleLinkTelegram(nonce: string, chatId: number): string | null {

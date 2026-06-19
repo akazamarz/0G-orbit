@@ -1,4 +1,4 @@
-export * from "./types/index.js";
-export * from "./constants/index.js";
-export { loadConfig, resetConfig } from "./config.js";
-export type { Env } from "./config.js";
+export * from "./types/index";
+export * from "./constants/index";
+export { loadConfig, resetConfig } from "./config";
+export type { Env } from "./config";

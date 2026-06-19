@@ -13,7 +13,10 @@ export async function startBot(): Promise<void> {
 
   setNotifier({
     async sendMessage(chatId, text) {
-      await bot!.api.sendMessage(chatId, text, { parse_mode: "HTML", disable_web_page_preview: true });
+      await bot!.api.sendMessage(chatId, text, {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
     },
   });
 

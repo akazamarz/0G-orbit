@@ -10,10 +10,11 @@ export interface SearchResult {
 }
 
 function mapTweet(raw: Record<string, unknown>): Tweet {
+  const author = (raw.author as Record<string, unknown> | undefined) ?? {};
   return {
     id: String(raw.id ?? raw.tweet_id ?? ""),
     text: String(raw.text ?? raw.content ?? ""),
-    author: String(raw.author?.userName ?? raw.author?.username ?? raw.authorUserName ?? ""),
+    author: String(author.userName ?? author.username ?? raw.authorUserName ?? ""),
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
     favoriteCount: Number(raw.favoriteCount ?? raw.favorite_count ?? 0),
     retweetCount: Number(raw.retweetCount ?? raw.retweet_count ?? 0),

@@ -1,29 +1,27 @@
 import { Hono } from "hono";
-import type { Context } from "hono";
-import { loadConfig, type HealthResponse, type SubscriptionInput, type SubscriptionUpdate, type FeedbackRequest, type LinkTelegramRequest } from "@orbit/shared";
+import type { MiddlewareHandler } from "hono";
+import { type HealthResponse, type SubscriptionInput, type SubscriptionUpdate, type FeedbackRequest, type LinkTelegramRequest } from "@orbit/shared";
 import { verifyInternalSecret, handleCreateSubscription, handleUpdateSubscription, handleDeleteSubscription, handleListSubscriptions, listAlerts, recordFeedback, handleCreateTelegramLink, handleLinkTelegram } from "./handlers.js";
 import { logger } from "../utils/logger.js";
 
 const app = new Hono();
 const startedAt = Date.now();
 
-function secretMiddleware(c: Context, next: () => Promise<void>): Promise<void> | Response {
+const secretMiddleware: MiddlewareHandler = async (c, next) => {
   if (!verifyInternalSecret(c.req.header("x-internal-secret"))) {
     logger.warn({ path: c.req.path }, "unauthorized internal request");
-    return Promise.resolve(c.json({ error: "unauthorized" }, 401));
+    return c.json({ error: "unauthorized" }, 401);
   }
-  return next();
-}
+  await next();
+};
 
 app.get("/internal/health", (c) => {
-  const config = loadConfig();
   const res: HealthResponse = {
     status: "ok",
     uptime: Date.now() - startedAt,
     subscriptions: 0,
     version: "0.1.0",
   };
-  void config;
   return c.json(res);
 });
 
@@ -41,6 +39,7 @@ app.get("/internal/subscriptions", secretMiddleware, (c) => {
 
 app.patch("/internal/subscriptions/:id", secretMiddleware, async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: "invalid id" }, 400);
   const body = (await c.req.json()) as SubscriptionUpdate;
   const sub = handleUpdateSubscription(id, body);
   if (!sub) return c.json({ error: "not found" }, 404);
@@ -49,6 +48,7 @@ app.patch("/internal/subscriptions/:id", secretMiddleware, async (c) => {
 
 app.delete("/internal/subscriptions/:id", secretMiddleware, (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: "invalid id" }, 400);
   const ok = handleDeleteSubscription(id);
   if (!ok) return c.json({ error: "not found" }, 404);
   return c.json({ ok: true });

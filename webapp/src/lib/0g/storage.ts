@@ -1,5 +1,6 @@
+import { MemData, Indexer } from "@0gfoundation/0g-storage-ts-sdk";
+import { ZG_STORAGE, ZG_CHAIN } from "@orbit/shared";
 import { ethers } from "ethers";
-import { ZG_STORAGE } from "@orbit/shared";
 import { getSigner } from "./chain";
 
 export interface BrowserUploadResult {
@@ -12,23 +13,26 @@ export async function uploadUserConfig(payload: unknown): Promise<BrowserUploadR
   if (!signer) throw new Error("wallet not connected");
 
   const data = Buffer.from(JSON.stringify(payload), "utf8");
-  const { ZgFile, Indexer } = await import("@0gfoundation/0g-storage-ts-sdk");
   const indexer = new Indexer(ZG_STORAGE.indexer);
-  const zgFile = new ZgFile(Buffer.from(`orbit/configs/${Date.now()}.json`));
-  await zgFile.setData(data);
-  const [tree, err] = await zgFile.merkleTree();
-  if (err || !tree) throw new Error("merkle tree failed");
-  const root = tree.rootHash();
+  const file = new MemData(new Uint8Array(data));
 
-  const txHash = await indexer.upload(zgFile, 0, signer, 0, { txGASLimit: 500000 });
-  return { storageRoot: root, txHash };
+  const [result, err] = await indexer.upload(file, ZG_CHAIN.rpc, signer, undefined, undefined, {
+    gasLimit: BigInt(500000),
+  });
+  if (err) throw new Error(`0g storage upload failed: ${err.message}`);
+  if (!result) throw new Error("0g storage upload returned no result");
+
+  const storageRoot = "rootHash" in result ? result.rootHash : result.rootHashes[0]!;
+  const txHash = "txHash" in result ? result.txHash : result.txHashes[0]!;
+  return { storageRoot, txHash };
 }
 
 export async function downloadUserConfig(storageRoot: string): Promise<unknown> {
-  const { Indexer } = await import("@0gfoundation/0g-storage-ts-sdk");
   const indexer = new Indexer(ZG_STORAGE.indexer);
-  const data = await indexer.download(storageRoot);
-  return JSON.parse(Buffer.from(data).toString("utf8"));
+  const [blob, err] = await indexer.downloadToBlob(storageRoot);
+  if (err) throw new Error(`0g storage download failed: ${err.message}`);
+  const text = await blob.text();
+  return JSON.parse(text);
 }
 
 export function hashContent(content: unknown): string {

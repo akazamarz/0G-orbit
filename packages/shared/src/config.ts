@@ -28,6 +28,7 @@ const envSchema = z.object({
   X_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(300000),
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
+  TELEGRAM_BOT_USERNAME: z.string().min(1),
 
   JWT_SECRET: z.string().min(16),
   NEXT_PUBLIC_AGENT_BASE_URL: z.string().url().default("http://127.0.0.1:4000"),

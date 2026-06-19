@@ -21,5 +21,6 @@ export function getServerWallet(): ethers.Wallet {
 
 export async function getServerBalance(): Promise<bigint> {
   const w = getServerWallet();
+  if (!w.provider) throw new Error("server wallet provider not connected");
   return w.provider.getBalance(w.address);
 }

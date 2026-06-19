@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { filterUnseen, markSeen, searchAllPages } from "../x/index.js";
-import { scoreTweet, briefAlert } from "../ai/client.js";
+import { scoreTweet, briefAlert, digestBriefing } from "../ai/client.js";
 import { uploadDigest, attest } from "../0g/index.js";
-import { sendAlert } from "../telegram/notify.js";
-import type { Alert, Subscription } from "@orbit/shared";
+import { sendAlert, sendDigest } from "../telegram/notify.js";
+import type { Alert, AlertDigest, Subscription } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
 
@@ -56,13 +56,19 @@ export async function runDigest(sub: Subscription): Promise<void> {
   const alerts = listAlertsSince(sub.id, since);
   if (alerts.length === 0) return;
 
-  const { digestBriefing } = await import("../ai/client.js");
   const alertsText = alerts
     .map((a) => `@${a.tweet.author}: ${a.tweet.text.slice(0, 120)}`)
     .join("\n");
   const briefing = await digestBriefing(alertsText);
 
-  const digest = { id: randomUUID(), subscriptionId: sub.id, wallet: sub.wallet, alerts, briefing, createdAt: Date.now() };
+  const digest: AlertDigest = {
+    id: randomUUID(),
+    subscriptionId: sub.id,
+    wallet: sub.wallet,
+    alerts,
+    briefing,
+    createdAt: Date.now(),
+  };
   const upload = await uploadDigest(digest, sub.wallet);
   digest.storageRoot = upload.storageRoot;
 
@@ -70,7 +76,6 @@ export async function runDigest(sub: Subscription): Promise<void> {
   if (att) digest.attestationTxHash = att.txHash;
 
   if (sub.telegramChatId) {
-    const { sendDigest } = await import("../telegram/notify.js");
     await sendDigest(sub.telegramChatId, briefing, alerts, att?.txHash);
   }
 

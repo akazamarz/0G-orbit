@@ -6,9 +6,14 @@ import { logger } from "../utils/logger.js";
 import { StorageError } from "../utils/errors.js";
 import { retry } from "../utils/retry.js";
 
-let contract: ethers.Contract | null = null;
+type AttestationContract = ethers.Contract & {
+  attest(contentHash: string, storageRoot: string): Promise<ethers.ContractTransactionResponse>;
+  isAttested(contentHash: string): Promise<boolean>;
+};
 
-export function getAttestationContract(): ethers.Contract | null {
+let contract: AttestationContract | null = null;
+
+export function getAttestationContract(): AttestationContract | null {
   const config = loadConfig();
   if (!config.ORBIT_ATTESTATION_ADDRESS) {
     logger.warn("ORBIT_ATTESTATION_ADDRESS not set, attestation disabled");
@@ -20,7 +25,7 @@ export function getAttestationContract(): ethers.Contract | null {
     config.ORBIT_ATTESTATION_ADDRESS,
     ORBIT_ATTESTATION_ABI,
     wallet,
-  );
+  ) as AttestationContract;
   return contract;
 }
 
@@ -31,16 +36,13 @@ export async function attest(
 ): Promise<AttestationData | null> {
   const c = getAttestationContract();
   if (!c) return null;
-  const contentHash = ethers.keccak256(
-    ethers.toUtf8Bytes(JSON.stringify(content)),
-  );
+  const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(content)));
   logger.info({ walletAddress, contentHash, storageRoot }, "attesting on-chain");
 
   try {
-    const tx = await retry(
-      async () => c.attest(contentHash, storageRoot) as Promise<ethers.ContractTransaction>,
-      { label: "attestation-tx" },
-    );
+    const tx = await retry(async () => c.attest(contentHash, storageRoot), {
+      label: "attestation-tx",
+    });
     const receipt = await tx.wait();
     if (!receipt) throw new StorageError("attestation tx no receipt");
     logger.info({ txHash: receipt.hash }, "attestation confirmed");
@@ -59,5 +61,5 @@ export async function attest(
 export async function isAttested(contentHash: string): Promise<boolean> {
   const c = getAttestationContract();
   if (!c) return false;
-  return (await c.isAttested(contentHash)) as boolean;
+  return c.isAttested(contentHash);
 }
