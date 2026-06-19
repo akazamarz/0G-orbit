@@ -1,16 +1,36 @@
 import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig, RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
-import { wagmiConfig } from "@/lib/wagmi";
+import { zgGalileo } from "@/lib/chains";
 import { ToastProvider } from "@/components/Toast";
+import styles from "./index.module.css";
+
+function createWagmiConfig() {
+  return getDefaultConfig({
+    appName: "Orbit",
+    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "00000000000000000000000000000000",
+    chains: [zgGalileo],
+    ssr: false,
+  });
+}
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const [config] = useState(createWagmiConfig);
   const [queryClient] = useState(() => new QueryClient());
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className={styles.loading}>Loading wallet…</div>;
+  }
+
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={darkTheme({

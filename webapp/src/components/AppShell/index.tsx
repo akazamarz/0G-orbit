@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import { AuthButton } from "@/components/AuthButton";
 import styles from "./index.module.css";
+
+const AuthButton = dynamic(
+  () => import("@/components/AuthButton").then((m) => m.AuthButton),
+  { ssr: false },
+);
 
 interface Props {
   children: React.ReactNode;

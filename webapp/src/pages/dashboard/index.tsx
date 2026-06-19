@@ -5,13 +5,20 @@ import { AppShell } from "@/components/AppShell";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { AlertList } from "@/components/AlertList";
 import { EmptyState } from "@/components/EmptyState";
-import { PendingAttestations } from "@/components/PendingAttestations";
+import dynamic from "next/dynamic";
 import { useSession } from "@/hooks/useSession";
+import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
 import type { Subscription, Alert, PendingAttestation, EIP712Domain } from "@orbit/shared";
 
+const PendingAttestations = dynamic(
+  () => import("@/components/PendingAttestations").then((m) => m.PendingAttestations),
+  { ssr: false },
+);
+
 export default function Dashboard() {
   const { loading: sessionLoading, isAuthed } = useSession();
+  const { toast } = useToast();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [pendingAtts, setPendingAtts] = useState<PendingAttestation[]>([]);
@@ -20,11 +27,14 @@ export default function Dashboard() {
 
   const fetchPending = useCallback(() => {
     void fetch("/api/attestations/pending")
-      .then((r) => (r.ok ? r.json() : null))
+      .then(async (r) => {
+        if (!r.ok) return null;
+        return r.json() as Promise<{ pending: PendingAttestation[]; domain: EIP712Domain }>;
+      })
       .then((d) => {
         if (d) {
-          setPendingAtts(d.pending);
-          setDomain(d.domain);
+          setPendingAtts(Array.isArray(d.pending) ? d.pending : []);
+          setDomain(d.domain ?? null);
         }
       });
   }, []);
@@ -33,23 +43,39 @@ export default function Dashboard() {
     if (!isAuthed) return;
     setDataLoading(true);
     Promise.all([
-      fetch("/api/subscriptions").then((r) => r.json()),
-      fetch("/api/alerts").then((r) => r.json()),
+      fetch("/api/subscriptions").then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load orbits");
+        return data;
+      }),
+      fetch("/api/alerts").then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load alerts");
+        return data;
+      }),
     ])
       .then(([s, a]) => {
-        setSubs(s as Subscription[]);
-        setAlerts(a as Alert[]);
+        setSubs(Array.isArray(s) ? s : []);
+        setAlerts(Array.isArray(a) ? a : []);
+      })
+      .catch((err) => {
+        toast((err as Error).message, "error");
+        setSubs([]);
+        setAlerts([]);
       })
       .finally(() => setDataLoading(false));
     fetchPending();
     const interval = setInterval(() => {
       void fetch("/api/alerts")
-        .then((r) => r.json())
-        .then(setAlerts);
+        .then(async (r) => {
+          if (!r.ok) return;
+          const data = await r.json();
+          if (Array.isArray(data)) setAlerts(data);
+        });
       fetchPending();
     }, 15000);
     return () => clearInterval(interval);
-  }, [isAuthed, fetchPending]);
+  }, [isAuthed, fetchPending, toast]);
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
 

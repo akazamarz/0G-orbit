@@ -30,14 +30,30 @@ export async function agentFetch<T>(
     headers["x-user-wallet"] = opts.wallet;
   }
 
-  const res = await fetch(`${config.NEXT_PUBLIC_AGENT_BASE_URL}${path}`, {
+  let url = `${config.NEXT_PUBLIC_AGENT_BASE_URL}${path}`;
+  if (opts.wallet) {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has("wallet")) {
+      parsed.searchParams.set("wallet", opts.wallet);
+    }
+    url = parsed.toString();
+  }
+
+  const res = await fetch(url, {
     method: opts.method ?? "GET",
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
 
   if (!res.ok) {
-    throw new AgentError(await res.text(), res.status);
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text) as { error?: string };
+      throw new AgentError(json.error ?? text, res.status);
+    } catch (e) {
+      if (e instanceof AgentError) throw e;
+      throw new AgentError(text, res.status);
+    }
   }
   return (await res.json()) as T;
 }

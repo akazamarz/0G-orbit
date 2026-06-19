@@ -33,7 +33,7 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
         domain: {
           name: domain.name,
           version: domain.version,
-          chainId: BigInt(domain.chainId),
+          chainId: domain.chainId,
           verifyingContract: domain.verifyingContract as `0x${string}`,
         },
         types: ATTESTATION_TYPES,
