@@ -6,7 +6,7 @@ import { createSubscription, deleteSubscription, getSubscription, listSubscripti
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
 import { createLinkNonce, bindNonceToChat } from "../telegram/notify.js";
 import { setTelegramChat } from "../orbits/repository.js";
-import { listPendingAttestations, attestWithSignature, getEIP712Domain } from "../0g/index.js";
+import { listPendingAttestations, attestWithSignature, getEIP712Domain, isAttestationEnabled } from "../0g/index.js";
 
 export function listAlerts(wallet: string, since = 0, limit = 50): Alert[] {
   const rows = getDb()
@@ -80,10 +80,14 @@ export function handleLinkTelegram(nonce: string, chatId: number): string | null
 }
 
 export function handleListPendingAttestations(wallet: string): PendingAttestationsResponse {
-  const pending = listPendingAttestations(wallet);
-  const domain = getEIP712Domain();
-  if (!domain) throw new Error("attestation contract not configured");
-  return { pending, domain };
+  if (!isAttestationEnabled()) {
+    return { enabled: false, pending: [], domain: null };
+  }
+  return {
+    enabled: true,
+    pending: listPendingAttestations(wallet),
+    domain: getEIP712Domain(),
+  };
 }
 
 export async function handleSubmitAttestation(

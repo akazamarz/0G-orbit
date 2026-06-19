@@ -29,13 +29,20 @@ export default function Dashboard() {
     void fetch("/api/attestations/pending")
       .then(async (r) => {
         if (!r.ok) return null;
-        return r.json() as Promise<{ pending: PendingAttestation[]; domain: EIP712Domain }>;
+        return r.json() as Promise<{
+          enabled: boolean;
+          pending: PendingAttestation[];
+          domain: EIP712Domain | null;
+        }>;
       })
       .then((d) => {
-        if (d) {
-          setPendingAtts(Array.isArray(d.pending) ? d.pending : []);
-          setDomain(d.domain ?? null);
+        if (!d?.enabled) {
+          setPendingAtts([]);
+          setDomain(null);
+          return;
         }
+        setPendingAtts(Array.isArray(d.pending) ? d.pending : []);
+        setDomain(d.domain ?? null);
       });
   }, []);
 

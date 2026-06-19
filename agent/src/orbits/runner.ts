@@ -5,7 +5,7 @@ import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { filterUnseen, markSeen, searchAllPages } from "../x/index.js";
 import { scoreTweet, briefAlert, digestBriefing } from "../ai/client.js";
-import { uploadDigest, createPendingAttestation } from "../0g/index.js";
+import { uploadDigest, createPendingAttestation, isAttestationEnabled } from "../0g/index.js";
 import { sendAlert, sendDigest } from "../telegram/notify.js";
 import type { Alert, AlertDigest, Subscription } from "@orbit/shared";
 
@@ -74,15 +74,18 @@ export async function runDigest(sub: Subscription): Promise<void> {
   const upload = await uploadDigest(digest, sub.wallet);
   digest.storageRoot = upload.storageRoot;
 
-  const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(digest)));
-  const deadline = Date.now() + loadConfig().ATTESTATION_SIGN_DEADLINE_MS;
-  createPendingAttestation(sub.wallet, digest, contentHash, upload.storageRoot, deadline);
+  if (isAttestationEnabled()) {
+    const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(digest)));
+    const deadline = Date.now() + loadConfig().ATTESTATION_SIGN_DEADLINE_MS;
+    createPendingAttestation(sub.wallet, digest, contentHash, upload.storageRoot, deadline);
+    logger.info({ subId: sub.id, count: alerts.length, contentHash }, "digest stored, pending attestation");
+  } else {
+    logger.info({ subId: sub.id, count: alerts.length }, "digest stored");
+  }
 
   if (sub.telegramChatId) {
     await sendDigest(sub.telegramChatId, briefing, alerts);
   }
-
-  logger.info({ subId: sub.id, count: alerts.length, contentHash }, "digest stored, pending attestation");
 }
 
 function persistAlert(alert: Alert): void {

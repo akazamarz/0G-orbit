@@ -173,8 +173,9 @@ export interface PendingAttestation {
 }
 
 export interface PendingAttestationsResponse {
+  enabled: boolean;
   pending: PendingAttestation[];
-  domain: EIP712Domain;
+  domain: EIP712Domain | null;
 }
 
 export interface SignAttestationRequest {

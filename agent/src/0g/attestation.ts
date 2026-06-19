@@ -15,11 +15,19 @@ type AttestationContract = ethers.Contract & {
 };
 
 let contract: AttestationContract | null = null;
+let attestationDisabledLogged = false;
+
+export function isAttestationEnabled(): boolean {
+  return Boolean(loadConfig().ORBIT_ATTESTATION_ADDRESS);
+}
 
 export function getAttestationContract(): AttestationContract | null {
   const config = loadConfig();
   if (!config.ORBIT_ATTESTATION_ADDRESS) {
-    logger.warn("ORBIT_ATTESTATION_ADDRESS not set, attestation disabled");
+    if (!attestationDisabledLogged) {
+      logger.info("ORBIT_ATTESTATION_ADDRESS not set — on-chain attestation disabled");
+      attestationDisabledLogged = true;
+    }
     return null;
   }
   if (contract) return contract;
