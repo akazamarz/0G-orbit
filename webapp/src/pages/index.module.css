@@ -91,45 +91,51 @@
 }
 
 .ctas {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: center;
-  flex-wrap: wrap;
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(10, 10, 10, 0.6);
 }
 
 .primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--accent);
   color: #fff;
-  border: 1px solid var(--accent);
-  padding: var(--space-3) var(--space-5);
-  border-radius: 4px;
-  font-size: 0.95rem;
+  border: none;
+  padding: 0.875rem 1.625rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease;
 }
 
 .primary:hover {
   background: var(--accent-hover);
-  border-color: var(--accent-hover);
   color: #fff;
 }
 
 .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   color: var(--fg-muted);
-  border: 1px solid var(--border);
-  padding: var(--space-3) var(--space-5);
-  border-radius: 4px;
-  font-size: 0.95rem;
+  border: none;
+  border-left: 1px solid var(--border);
+  padding: 0.875rem 1.625rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  letter-spacing: 0.01em;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .secondary:hover {
-  border-color: var(--fg-muted);
   color: var(--fg);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .steps {
@@ -143,8 +149,8 @@
 
 .step {
   display: grid;
-  grid-template-columns: 5rem 1fr;
-  gap: var(--space-5);
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-6);
   align-items: start;
   padding: var(--space-5) 0;
   border-bottom: 1px solid var(--border);
@@ -152,17 +158,19 @@
 
 .stepNum {
   font-family: var(--font-display);
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 400;
   color: var(--accent);
   opacity: 0.5;
   letter-spacing: 0.04em;
   line-height: 1;
-  padding-top: 2px;
+  padding-top: 4px;
+  text-align: right;
 }
 
 .stepContent {
-  padding-top: 6px;
+  padding-top: 8px;
+  padding-left: var(--space-2);
 }
 
 .step h3 {
@@ -208,13 +216,21 @@
 
   .ctas {
     flex-direction: column;
-    align-items: stretch;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
   }
 
   .primary,
   .secondary {
-    text-align: center;
-    padding: var(--space-3) var(--space-4);
+    width: 100%;
+    padding: 0.8rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .secondary {
+    border-left: none;
+    border-top: 1px solid var(--border);
   }
 
   .steps {
@@ -222,12 +238,18 @@
   }
 
   .step {
-    grid-template-columns: 3rem 1fr;
-    gap: var(--space-3);
-    padding: var(--space-4) 0;
+    grid-template-columns: 4.5rem 1fr;
+    gap: var(--space-4);
+    padding: var(--space-5) 0;
   }
 
   .stepNum {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
+    padding-top: 2px;
+  }
+
+  .stepContent {
+    padding-top: 4px;
+    padding-left: var(--space-1);
   }
 }
