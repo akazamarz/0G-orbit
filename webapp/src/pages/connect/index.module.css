@@ -1,0 +1,41 @@
+.page {
+  min-height: 100vh;
+  padding: var(--space-5);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.back {
+  color: var(--fg-muted);
+  margin-bottom: var(--space-4);
+  display: inline-block;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.deeplink {
+  display: inline-block;
+  background: #229ED9;
+  color: #fff;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  margin-top: var(--space-3);
+}
+
+.deeplink:hover {
+  background: #1d8bc4;
+  color: #fff;
+}
+
+.muted {
+  color: var(--fg-muted);
+  margin-top: var(--space-3);
+  font-size: 0.9rem;
+}

@@ -1,0 +1,16 @@
+packages:
+  - "webapp"
+  - "agent"
+  - "contracts"
+  - "packages/*"
+
+allowBuilds:
+  better-sqlite3: true
+  keccak: true
+  secp256k1: true
+  esbuild: true
+  sharp: true
+  bufferutil: true
+  utf-8-validate: true
+  unrs-resolver: true
+  es5-ext: true

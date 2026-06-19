@@ -2,3 +2,35 @@ AGENTS.md
 opencode.json
 PLAN.md
 .codegraph
+
+# deps
+node_modules
+.pnpm-store
+
+# build output
+dist
+build
+.next
+out
+.turbo
+
+# env
+.env
+.env.*
+!.env.example
+
+# data
+data
+*.sqlite
+*.sqlite3
+*.db
+
+# logs
+*.log
+logs
+
+# misc
+.DS_Store
+Thumbs.db
+coverage
+*.tsbuildinfo

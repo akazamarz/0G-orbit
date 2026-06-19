@@ -1,0 +1,30 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.intent {
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.meta {
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  margin-right: var(--space-2);
+}
+
+.paused {
+  color: var(--warning);
+}
