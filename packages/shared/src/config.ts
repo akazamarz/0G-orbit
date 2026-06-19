@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { loadEnvFile } from "./load-env.js";
 
 const envSchema = z.object({
   AI_BASE_URL: z.string().url(),
@@ -8,7 +9,8 @@ const envSchema = z.object({
 
   SERVER_PRIVATE_KEY: z
     .string()
-    .regex(/^0x[a-fA-F0-9]{64}$/, "must be a 0x-prefixed 32-byte hex private key"),
+    .transform((v) => (v.startsWith("0x") ? v : `0x${v}`))
+    .pipe(z.string().regex(/^0x[a-fA-F0-9]{64}$/, "must be a 0x-prefixed 32-byte hex private key")),
 
   ZG_CHAIN_RPC: z.string().url(),
   ZG_CHAIN_ID: z.coerce.number().int().positive(),
@@ -45,9 +47,10 @@ export type Env = z.infer<typeof envSchema>;
 
 let cached: Env | null = null;
 
-export function loadConfig(source: Record<string, string | undefined> = process.env): Env {
+export function loadConfig(source?: Record<string, string | undefined>): Env {
   if (cached) return cached;
-  const parsed = envSchema.safeParse(source);
+  loadEnvFile();
+  const parsed = envSchema.safeParse(source ?? process.env);
   if (!parsed.success) {
     const issues = parsed.error.issues
       .map((i) => `  ${i.path.join(".")}: ${i.message}`)

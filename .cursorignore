@@ -1,0 +1,13 @@
+﻿# Secrets and local env (never send to AI context)
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+.turbo/
+
+# Agent local data
+agent/data/
