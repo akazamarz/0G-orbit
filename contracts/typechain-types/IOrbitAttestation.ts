@@ -25,27 +25,42 @@ import type {
 
 export interface IOrbitAttestationInterface extends Interface {
   getFunction(
-    nameOrSignature: "attest" | "getAttestation" | "isAttested"
+    nameOrSignature:
+      | "attestWithSignature"
+      | "getAttestation"
+      | "getDomainSeparator"
+      | "isAttested"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "Attestation"): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "attest",
-    values: [BytesLike, string]
+    functionFragment: "attestWithSignature",
+    values: [BytesLike, string, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getAttestation",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDomainSeparator",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isAttested",
     values: [BytesLike]
   ): string;
 
-  decodeFunctionResult(functionFragment: "attest", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "attestWithSignature",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getAttestation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDomainSeparator",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "isAttested", data: BytesLike): Result;
@@ -119,8 +134,13 @@ export interface IOrbitAttestation extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  attest: TypedContractMethod<
-    [contentHash: BytesLike, storageRoot: string],
+  attestWithSignature: TypedContractMethod<
+    [
+      contentHash: BytesLike,
+      storageRoot: string,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -137,6 +157,8 @@ export interface IOrbitAttestation extends BaseContract {
     "view"
   >;
 
+  getDomainSeparator: TypedContractMethod<[], [string], "view">;
+
   isAttested: TypedContractMethod<[contentHash: BytesLike], [boolean], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -144,9 +166,14 @@ export interface IOrbitAttestation extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "attest"
+    nameOrSignature: "attestWithSignature"
   ): TypedContractMethod<
-    [contentHash: BytesLike, storageRoot: string],
+    [
+      contentHash: BytesLike,
+      storageRoot: string,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -163,6 +190,9 @@ export interface IOrbitAttestation extends BaseContract {
     ],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "getDomainSeparator"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "isAttested"
   ): TypedContractMethod<[contentHash: BytesLike], [boolean], "view">;

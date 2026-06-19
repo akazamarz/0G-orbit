@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { ethers } from "ethers";
+import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { filterUnseen, markSeen, searchAllPages } from "../x/index.js";
 import { scoreTweet, briefAlert, digestBriefing } from "../ai/client.js";
-import { uploadDigest, attest } from "../0g/index.js";
+import { uploadDigest, createPendingAttestation } from "../0g/index.js";
 import { sendAlert, sendDigest } from "../telegram/notify.js";
 import type { Alert, AlertDigest, Subscription } from "@orbit/shared";
 
@@ -72,14 +74,15 @@ export async function runDigest(sub: Subscription): Promise<void> {
   const upload = await uploadDigest(digest, sub.wallet);
   digest.storageRoot = upload.storageRoot;
 
-  const att = await attest(sub.wallet, digest, upload.storageRoot);
-  if (att) digest.attestationTxHash = att.txHash;
+  const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(digest)));
+  const deadline = Date.now() + loadConfig().ATTESTATION_SIGN_DEADLINE_MS;
+  createPendingAttestation(sub.wallet, digest, contentHash, upload.storageRoot, deadline);
 
   if (sub.telegramChatId) {
-    await sendDigest(sub.telegramChatId, briefing, alerts, att?.txHash);
+    await sendDigest(sub.telegramChatId, briefing, alerts);
   }
 
-  logger.info({ subId: sub.id, count: alerts.length, txHash: att?.txHash }, "digest sent");
+  logger.info({ subId: sub.id, count: alerts.length, contentHash }, "digest stored, pending attestation");
 }
 
 function persistAlert(alert: Alert): void {

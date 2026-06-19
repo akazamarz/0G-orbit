@@ -1,14 +1,17 @@
+import { randomUUID } from "node:crypto";
 import { ethers } from "ethers";
-import { loadConfig, type AttestationData } from "@orbit/shared";
+import { loadConfig, ATTESTATION_EIP712, ZG_CHAIN, type AttestationData, type EIP712Domain, type PendingAttestation, type AlertDigest } from "@orbit/shared";
 import { getServerWallet } from "./chain.js";
 import { ORBIT_ATTESTATION_ABI } from "./attestation-abi.js";
+import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { StorageError } from "../utils/errors.js";
 import { retry } from "../utils/retry.js";
 
 type AttestationContract = ethers.Contract & {
-  attest(contentHash: string, storageRoot: string): Promise<ethers.ContractTransactionResponse>;
+  attestWithSignature(contentHash: string, storageRoot: string, deadline: bigint, signature: string): Promise<ethers.ContractTransactionResponse>;
   isAttested(contentHash: string): Promise<boolean>;
+  getDomainSeparator(): Promise<string>;
 };
 
 let contract: AttestationContract | null = null;
@@ -29,23 +32,40 @@ export function getAttestationContract(): AttestationContract | null {
   return contract;
 }
 
-export async function attest(
+export function getEIP712Domain(): EIP712Domain | null {
+  const config = loadConfig();
+  if (!config.ORBIT_ATTESTATION_ADDRESS) return null;
+  return {
+    name: ATTESTATION_EIP712.name,
+    version: ATTESTATION_EIP712.version,
+    chainId: ZG_CHAIN.chainId,
+    verifyingContract: config.ORBIT_ATTESTATION_ADDRESS,
+  };
+}
+
+export async function attestWithSignature(
   walletAddress: string,
-  content: unknown,
+  contentHash: string,
   storageRoot: string,
-): Promise<AttestationData | null> {
+  deadline: number,
+  signature: string,
+): Promise<AttestationData> {
   const c = getAttestationContract();
-  if (!c) return null;
-  const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(content)));
-  logger.info({ walletAddress, contentHash, storageRoot }, "attesting on-chain");
+  if (!c) throw new StorageError("attestation contract not configured");
+
+  logger.info({ walletAddress, contentHash, storageRoot, deadline }, "relaying user-signed attestation");
 
   try {
-    const tx = await retry(async () => c.attest(contentHash, storageRoot), {
-      label: "attestation-tx",
-    });
+    const tx = await retry(
+      async () => c.attestWithSignature(contentHash, storageRoot, BigInt(deadline), signature),
+      { label: "attestation-relay" },
+    );
     const receipt = await tx.wait();
     if (!receipt) throw new StorageError("attestation tx no receipt");
-    logger.info({ txHash: receipt.hash }, "attestation confirmed");
+    logger.info({ txHash: receipt.hash }, "attestation confirmed on-chain");
+
+    markAttestationComplete(contentHash, receipt.hash);
+
     return {
       wallet: walletAddress,
       contentHash,
@@ -54,7 +74,7 @@ export async function attest(
       txHash: receipt.hash,
     };
   } catch (err) {
-    throw new StorageError("attestation failed", err);
+    throw new StorageError("attestation relay failed", err);
   }
 }
 
@@ -62,4 +82,59 @@ export async function isAttested(contentHash: string): Promise<boolean> {
   const c = getAttestationContract();
   if (!c) return false;
   return c.isAttested(contentHash);
+}
+
+export function createPendingAttestation(
+  wallet: string,
+  digest: AlertDigest,
+  contentHash: string,
+  storageRoot: string,
+  deadline: number,
+): void {
+  const id = randomUUID();
+  getDb()
+    .prepare(
+      `INSERT INTO pending_attestations (id, wallet, content_hash, storage_root, digest_id, digest_json, deadline, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+    )
+    .run(id, wallet, contentHash, storageRoot, digest.id, JSON.stringify(digest), deadline, Date.now());
+  logger.info({ wallet, contentHash, storageRoot, deadline }, "pending attestation created");
+}
+
+export function listPendingAttestations(wallet: string): PendingAttestation[] {
+  const rows = getDb()
+    .prepare("SELECT * FROM pending_attestations WHERE wallet = ? ORDER BY created_at DESC")
+    .all(wallet) as Record<string, unknown>[];
+
+  const now = Date.now();
+  return rows.map((r) => {
+    const deadline = Number(r.deadline);
+    let status: PendingAttestation["status"] = "pending";
+    if (r.status === "attested") {
+      status = "attested";
+    } else if (r.status === "expired" || deadline < now) {
+      status = "expired";
+    }
+
+    const digest = JSON.parse(String(r.digest_json)) as AlertDigest;
+    return {
+      id: String(r.id),
+      wallet: String(r.wallet),
+      contentHash: String(r.content_hash),
+      storageRoot: String(r.storage_root),
+      digestId: String(r.digest_id),
+      briefing: digest.briefing,
+      deadline,
+      status,
+      txHash: (r.tx_hash as string) ?? undefined,
+      createdAt: Number(r.created_at),
+      attestedAt: r.attested_at ? Number(r.attested_at) : undefined,
+    };
+  });
+}
+
+export function markAttestationComplete(contentHash: string, txHash: string): void {
+  getDb()
+    .prepare("UPDATE pending_attestations SET status = 'attested', tx_hash = ?, attested_at = ? WHERE content_hash = ?")
+    .run(txHash, Date.now(), contentHash);
 }

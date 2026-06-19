@@ -22,6 +22,11 @@ export const ZG_DA = {
   entrance: "0xE75A073dA5bb7b0eC622170Fd268f35E675a957B",
 } as const;
 
+export const ATTESTATION_EIP712 = {
+  name: "Orbit",
+  version: "1",
+} as const;
+
 export const X_API = {
   base: "https://api.twitterapi.io",
   advancedSearch: "https://api.twitterapi.io/twitter/tweet/advanced_search",

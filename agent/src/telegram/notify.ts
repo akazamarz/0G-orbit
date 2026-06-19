@@ -31,7 +31,6 @@ export async function sendDigest(
   chatId: number,
   briefing: string,
   alerts: Alert[],
-  attestationTxHash?: string,
 ): Promise<void> {
   const lines = [
     `📋 Orbit Daily Digest — ${alerts.length} signals`,
@@ -39,10 +38,9 @@ export async function sendDigest(
     briefing,
     ``,
     ...alerts.slice(0, 5).map((a) => `• ${a.summary} (@${a.tweet.author})`),
+    ``,
+    `🔗 Digest stored on 0G Storage. Sign in to Orbit to attest on-chain.`,
   ];
-  if (attestationTxHash) {
-    lines.push(``, `🔗 Attested on-chain: ${attestationTxHash}`);
-  }
   await send(chatId, lines.join("\n"));
 }
 

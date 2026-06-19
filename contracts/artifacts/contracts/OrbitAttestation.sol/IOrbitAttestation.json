@@ -45,9 +45,19 @@
           "internalType": "string",
           "name": "storageRoot",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
-      "name": "attest",
+      "name": "attestWithSignature",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -76,6 +86,19 @@
           "internalType": "string",
           "name": "storageRoot",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDomainSeparator",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
         }
       ],
       "stateMutability": "view",

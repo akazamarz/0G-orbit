@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
-import { type HealthResponse, type SubscriptionInput, type SubscriptionUpdate, type FeedbackRequest, type LinkTelegramRequest } from "@orbit/shared";
-import { verifyInternalSecret, handleCreateSubscription, handleUpdateSubscription, handleDeleteSubscription, handleListSubscriptions, listAlerts, recordFeedback, handleCreateTelegramLink, handleLinkTelegram } from "./handlers.js";
+import { type HealthResponse, type SubscriptionInput, type SubscriptionUpdate, type FeedbackRequest, type LinkTelegramRequest, type SignAttestationRequest } from "@orbit/shared";
+import { verifyInternalSecret, handleCreateSubscription, handleUpdateSubscription, handleDeleteSubscription, handleListSubscriptions, listAlerts, recordFeedback, handleCreateTelegramLink, handleLinkTelegram, handleListPendingAttestations, handleSubmitAttestation } from "./handlers.js";
 import { logger } from "../utils/logger.js";
 
 const app = new Hono();
@@ -78,6 +78,25 @@ app.post("/internal/link-telegram", secretMiddleware, async (c) => {
   const wallet = handleLinkTelegram(body.nonce, body.chatId);
   if (!wallet) return c.json({ error: "invalid or expired nonce" }, 400);
   return c.json({ ok: true, wallet });
+});
+
+app.get("/internal/attestations/pending", secretMiddleware, (c) => {
+  const wallet = c.req.query("wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  return c.json(handleListPendingAttestations(wallet));
+});
+
+app.post("/internal/attestations/sign", secretMiddleware, async (c) => {
+  const wallet = c.req.header("x-user-wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  const body = (await c.req.json()) as SignAttestationRequest;
+  try {
+    const result = await handleSubmitAttestation(wallet, body);
+    return c.json(result, 201);
+  } catch (err) {
+    logger.error({ err }, "attestation sign failed");
+    return c.json({ error: (err as Error).message }, 500);
+  }
 });
 
 export { app };

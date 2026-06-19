@@ -1,14 +1,17 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import styles from "./index.module.css";
 import { WalletButton } from "@/components/WalletButton";
-import type { Subscription, Alert } from "@orbit/shared";
+import { PendingAttestations } from "@/components/PendingAttestations";
+import type { Subscription, Alert, PendingAttestation, EIP712Domain } from "@orbit/shared";
 
 export default function Dashboard() {
   const [wallet, setWallet] = useState<string | null>(null);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [pendingAtts, setPendingAtts] = useState<PendingAttestation[]>([]);
+  const [domain, setDomain] = useState<EIP712Domain | null>(null);
 
   useEffect(() => {
     void fetch("/api/auth/session")
@@ -16,15 +19,28 @@ export default function Dashboard() {
       .then((d) => d && setWallet(d.wallet));
   }, []);
 
+  const fetchPending = useCallback(() => {
+    void fetch("/api/attestations/pending")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setPendingAtts(d.pending);
+          setDomain(d.domain);
+        }
+      });
+  }, []);
+
   useEffect(() => {
     if (!wallet) return;
     void fetch("/api/subscriptions").then((r) => r.json()).then(setSubs);
     void fetch("/api/alerts").then((r) => r.json()).then(setAlerts);
+    fetchPending();
     const interval = setInterval(() => {
       void fetch("/api/alerts").then((r) => r.json()).then(setAlerts);
+      fetchPending();
     }, 15000);
     return () => clearInterval(interval);
-  }, [wallet]);
+  }, [wallet, fetchPending]);
 
   return (
     <>
@@ -54,6 +70,13 @@ export default function Dashboard() {
             ))
           )}
         </section>
+
+        {pendingAtts.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.heading}>Pending Attestations</h2>
+            <PendingAttestations pending={pendingAtts} domain={domain} onAttested={fetchPending} />
+          </section>
+        )}
 
         <section className={styles.section}>
           <h2 className={styles.heading}>Recent alerts</h2>

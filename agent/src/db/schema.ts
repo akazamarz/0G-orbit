@@ -52,9 +52,25 @@ CREATE TABLE IF NOT EXISTS telegram_links (
   expires_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS pending_attestations (
+  id TEXT PRIMARY KEY,
+  wallet TEXT NOT NULL,
+  content_hash TEXT NOT NULL UNIQUE,
+  storage_root TEXT NOT NULL,
+  digest_id TEXT NOT NULL,
+  digest_json TEXT NOT NULL,
+  deadline INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  tx_hash TEXT,
+  created_at INTEGER NOT NULL,
+  attested_at INTEGER
+);
+
 CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_subscription ON alerts(subscription_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);
 CREATE INDEX IF NOT EXISTS idx_feedback_alert ON feedback(alert_id);
+CREATE INDEX IF NOT EXISTS idx_pending_wallet ON pending_attestations(wallet);
+CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_attestations(status);
 `;

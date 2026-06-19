@@ -1,11 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
-import type { Alert, Feedback, Subscription } from "@orbit/shared";
+import type { Alert, Feedback, Subscription, AttestationData, PendingAttestationsResponse, SignAttestationRequest } from "@orbit/shared";
 import { createSubscription, deleteSubscription, getSubscription, listSubscriptions, updateSubscription } from "../orbits/repository.js";
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
 import { createLinkNonce, bindNonceToChat } from "../telegram/notify.js";
 import { setTelegramChat } from "../orbits/repository.js";
+import { listPendingAttestations, attestWithSignature, getEIP712Domain } from "../0g/index.js";
 
 export function listAlerts(wallet: string, since = 0, limit = 50): Alert[] {
   const rows = getDb()
@@ -76,6 +77,20 @@ export function handleLinkTelegram(nonce: string, chatId: number): string | null
   const wallet = bindNonceToChat(nonce, chatId);
   if (wallet) setTelegramChat(wallet, chatId);
   return wallet;
+}
+
+export function handleListPendingAttestations(wallet: string): PendingAttestationsResponse {
+  const pending = listPendingAttestations(wallet);
+  const domain = getEIP712Domain();
+  if (!domain) throw new Error("attestation contract not configured");
+  return { pending, domain };
+}
+
+export async function handleSubmitAttestation(
+  wallet: string,
+  req: SignAttestationRequest,
+): Promise<AttestationData> {
+  return attestWithSignature(wallet, req.contentHash, req.storageRoot, req.deadline, req.signature);
 }
 
 export function verifyInternalSecret(header: string | undefined): boolean {

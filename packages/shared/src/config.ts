@@ -23,6 +23,7 @@ const envSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || /^0x[a-fA-F0-9]{40}$/.test(v)),
+  ATTESTATION_SIGN_DEADLINE_MS: z.coerce.number().int().positive().default(604800000),
 
   X_API_KEY: z.string().min(1),
   X_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(300000),

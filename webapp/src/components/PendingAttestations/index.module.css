@@ -1,0 +1,93 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.badgePending {
+  background: var(--warning);
+  color: #000;
+}
+
+.badgeAttested {
+  background: var(--success);
+  color: #000;
+}
+
+.badgeExpired {
+  background: var(--danger);
+  color: #fff;
+}
+
+.time {
+  color: var(--fg-muted);
+  font-size: 0.8rem;
+}
+
+.briefing {
+  margin: var(--space-2) 0;
+  font-size: 0.95rem;
+}
+
+.meta {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.hash {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.signBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  width: 100%;
+}
+
+.signBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.signBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.txLink {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: var(--space-2);
+}

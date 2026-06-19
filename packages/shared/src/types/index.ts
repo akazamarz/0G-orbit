@@ -145,6 +145,45 @@ export interface AttestationData {
   txHash: string;
 }
 
+export interface EIP712Domain {
+  name: string;
+  version: string;
+  chainId: number;
+  verifyingContract: string;
+}
+
+export interface AttestationRequest {
+  contentHash: string;
+  storageRoot: string;
+  deadline: number;
+}
+
+export interface PendingAttestation {
+  id: string;
+  wallet: string;
+  contentHash: string;
+  storageRoot: string;
+  digestId: string;
+  briefing: string;
+  deadline: number;
+  status: "pending" | "attested" | "expired";
+  txHash?: string;
+  createdAt: number;
+  attestedAt?: number;
+}
+
+export interface PendingAttestationsResponse {
+  pending: PendingAttestation[];
+  domain: EIP712Domain;
+}
+
+export interface SignAttestationRequest {
+  contentHash: string;
+  storageRoot: string;
+  deadline: number;
+  signature: string;
+}
+
 export interface HealthResponse {
   status: "ok" | "degraded";
   uptime: number;
