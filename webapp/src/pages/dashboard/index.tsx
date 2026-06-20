@@ -1,16 +1,18 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { AlertList } from "@/components/AlertList";
+import { AlertFeedFooter } from "@/components/AlertFeedFooter";
 import { Loading } from "@/components/Loading";
 import { WalletRequiredState } from "@/components/WalletRequiredState";
 import dynamic from "next/dynamic";
 import { useSession } from "@/hooks/useSession";
+import { useAlertFeed } from "@/hooks/useAlertFeed";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
-import type { Subscription, Alert, PendingAttestation, EIP712Domain } from "@orbit/shared";
+import type { Subscription, PendingAttestation, EIP712Domain } from "@orbit/shared";
 
 const PendingAttestations = dynamic(
   () => import("@/components/PendingAttestations").then((m) => m.PendingAttestations),
@@ -21,10 +23,21 @@ export default function Dashboard() {
   const { loading: sessionLoading, isAuthed } = useSession();
   const { toast } = useToast();
   const [subs, setSubs] = useState<Subscription[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [pendingAtts, setPendingAtts] = useState<PendingAttestation[]>([]);
   const [domain, setDomain] = useState<EIP712Domain | null>(null);
-  const [dataLoading, setDataLoading] = useState(false);
+  const [subsLoading, setSubsLoading] = useState(false);
+
+  const {
+    items: alerts,
+    total: alertTotal,
+    hasMore: alertsHasMore,
+    loading: alertsLoading,
+    loadingMore: alertsLoadingMore,
+    loadMore: loadMoreAlerts,
+  } = useAlertFeed({
+    enabled: isAuthed,
+    pollIntervalMs: 15_000,
+  });
 
   const fetchPending = useCallback(() => {
     void fetch("/api/attestations/pending")
@@ -49,44 +62,30 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isAuthed) return;
-    setDataLoading(true);
-    Promise.all([
-      fetch("/api/subscriptions").then(async (r) => {
+    setSubsLoading(true);
+    void fetch("/api/subscriptions")
+      .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load orbits");
         return data;
-      }),
-      fetch("/api/alerts").then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load alerts");
-        return data;
-      }),
-    ])
-      .then(([s, a]) => {
-        setSubs(Array.isArray(s) ? s : []);
-        setAlerts(Array.isArray(a) ? a : []);
       })
+      .then((s) => setSubs(Array.isArray(s) ? s : []))
       .catch((err) => {
         toast((err as Error).message, "error");
         setSubs([]);
-        setAlerts([]);
       })
-      .finally(() => setDataLoading(false));
+      .finally(() => setSubsLoading(false));
     fetchPending();
-    const interval = setInterval(() => {
-      void fetch("/api/alerts")
-        .then(async (r) => {
-          if (!r.ok) return;
-          const data = await r.json();
-          if (Array.isArray(data)) setAlerts(data);
-        });
-      fetchPending();
-    }, 15000);
+    const interval = setInterval(() => fetchPending(), 15_000);
     return () => clearInterval(interval);
   }, [isAuthed, fetchPending, toast]);
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
   const activeOrbits = subs.filter((s) => !s.paused).length;
+  const orbitTitles = useMemo(
+    () => Object.fromEntries(subs.map((s) => [s.id, s.title])),
+    [subs],
+  );
 
   return (
     <>
@@ -113,8 +112,8 @@ export default function Dashboard() {
                 </div>
                 <div className={styles.metricDivider} aria-hidden />
                 <div className={styles.metric}>
-                  <span className={styles.metricValue}>{alerts.length}</span>
-                  <span className={styles.metricLabel}>alert{alerts.length !== 1 ? "s" : ""}</span>
+                  <span className={styles.metricValue}>{alertTotal}</span>
+                  <span className={styles.metricLabel}>alert{alertTotal !== 1 ? "s" : ""}</span>
                 </div>
                 {pendingCount > 0 && (
                   <>
@@ -156,7 +155,7 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className={styles.panelBody}>
-                  {dataLoading ? (
+                  {subsLoading ? (
                     <Loading />
                   ) : subs.length === 0 ? (
                     <div className={styles.panelEmpty}>
@@ -191,12 +190,16 @@ export default function Dashboard() {
                   <h2 id="feed-heading" className={styles.panelTitle}>
                     Signal feed
                   </h2>
-                  {alerts.length > 0 && (
-                    <span className={styles.panelMeta}>Latest {Math.min(alerts.length, 15)}</span>
+                  {alertTotal > 0 && (
+                    <span className={styles.panelMeta}>
+                      {alerts.length < alertTotal
+                        ? `Showing ${alerts.length} of ${alertTotal}`
+                        : `${alertTotal} alert${alertTotal !== 1 ? "s" : ""}`}
+                    </span>
                   )}
                 </div>
                 <div className={styles.panelBody}>
-                  {dataLoading ? (
+                  {alertsLoading ? (
                     <Loading />
                   ) : alerts.length === 0 ? (
                     <div className={styles.panelEmpty}>
@@ -214,7 +217,14 @@ export default function Dashboard() {
                       </Link>
                     </div>
                   ) : (
-                    <AlertList alerts={alerts.slice(0, 15)} />
+                    <>
+                      <AlertList alerts={alerts} orbitTitles={orbitTitles} />
+                      <AlertFeedFooter
+                        hasMore={alertsHasMore}
+                        loadingMore={alertsLoadingMore}
+                        onLoadMore={() => void loadMoreAlerts()}
+                      />
+                    </>
                   )}
                 </div>
               </section>

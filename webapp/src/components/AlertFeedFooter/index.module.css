@@ -1,0 +1,31 @@
+.footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-3);
+}
+
+.loadMore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.loadMore:hover:not(:disabled) {
+  border-color: var(--fg-muted);
+}
+
+.loadMore:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

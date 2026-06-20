@@ -2,7 +2,6 @@ import { timingSafeEqual } from "node:crypto";
 import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import type {
-  Alert,
   Feedback,
   Subscription,
   SubscriptionInput,
@@ -19,6 +18,7 @@ import {
   listSubscriptions,
   updateSubscription,
 } from "../orbits/repository.js";
+import { listAlertFeed } from "../alerts/repository.js";
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
 import { createLinkNonce } from "../telegram/notify.js";
 import {
@@ -29,23 +29,7 @@ import {
 } from "../telegram/wallet.js";
 import { listPendingAttestations, attestWithSignature, getEIP712Domain, isAttestationEnabled } from "../0g/index.js";
 
-export function listAlerts(wallet: string, since = 0, limit = 50): Alert[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM alerts WHERE wallet = ? AND created_at >= ? ORDER BY created_at DESC LIMIT ?")
-    .all(wallet, since, limit) as Record<string, unknown>[];
-  return rows.map((r) => ({
-    id: String(r.id),
-    subscriptionId: String(r.subscription_id),
-    wallet: String(r.wallet),
-    tweet: JSON.parse(String(r.tweet_json)),
-    summary: String(r.summary),
-    score: Number(r.score),
-    storageRoot: (r.storage_root as string) ?? undefined,
-    attestationTxHash: (r.attestation_tx_hash as string) ?? undefined,
-    sentToTelegram: Boolean(r.sent_to_telegram),
-    createdAt: Number(r.created_at),
-  }));
-}
+export { listAlertFeed, countAlerts, parseAlertCursor } from "../alerts/repository.js";
 
 export function recordFeedback(wallet: string, alertId: string, rating: "up" | "down"): Feedback {
   const id = crypto.randomUUID();

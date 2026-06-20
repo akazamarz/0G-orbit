@@ -7,6 +7,7 @@ import { Loading } from "@/components/Loading";
 import { WalletRequiredState } from "@/components/WalletRequiredState";
 import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import styles from "./index.module.css";
 
 interface LinkResult {
@@ -35,6 +36,7 @@ function formatLinkedAt(ts?: number): string | null {
 export default function Connect() {
   const { isAuthed, loading } = useSession();
   const { toast } = useToast();
+  const { confirm } = useConfirmDialog();
   const [status, setStatus] = useState<WalletTelegramStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [link, setLink] = useState<LinkResult | null>(null);
@@ -148,9 +150,13 @@ export default function Connect() {
   }
 
   async function unlink() {
-    if (!confirm("Unlink Telegram from this wallet? Push-enabled orbits will stop delivering to chat.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Unlink Telegram?",
+      description: "Push-enabled orbits will stop delivering alerts to this chat.",
+      confirmLabel: "Unlink",
+      tone: "danger",
+    });
+    if (!ok) return;  
     setBusy(true);
     try {
       const res = await fetch("/api/telegram/unlink", { method: "POST" });

@@ -143,10 +143,24 @@ export interface FeedbackRequest {
   rating: FeedbackRating;
 }
 
+export interface AlertCursor {
+  createdAt: number;
+  id: string;
+}
+
 export interface AlertQuery {
   wallet: string;
-  since?: number;
+  subscriptionId?: string;
   limit?: number;
+  before?: AlertCursor;
+  after?: AlertCursor;
+}
+
+export interface AlertFeedResponse {
+  items: Alert[];
+  nextCursor: AlertCursor | null;
+  hasMore: boolean;
+  total: number;
 }
 
 export interface IntentToQueryResult {

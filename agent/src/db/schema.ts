@@ -86,6 +86,8 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_subscription ON alerts(subscription_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);
+CREATE INDEX IF NOT EXISTS idx_alerts_wallet_created ON alerts(wallet, created_at);
+CREATE INDEX IF NOT EXISTS idx_alerts_sub_created ON alerts(subscription_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_feedback_alert ON feedback(alert_id);
 CREATE INDEX IF NOT EXISTS idx_pending_wallet ON pending_attestations(wallet);
 CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_attestations(status);

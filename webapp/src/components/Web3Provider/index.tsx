@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { zgGalileo } from "@/lib/chains";
 import { ToastProvider } from "@/components/Toast";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import { Loading } from "@/components/Loading";
 import { SessionProvider } from "@/contexts/SessionContext";
 
@@ -41,7 +42,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           })}
         >
           <SessionProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+            </ToastProvider>
           </SessionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

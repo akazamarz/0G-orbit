@@ -2,11 +2,14 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { AppShell } from "@/components/AppShell";
-import { FeedbackPill } from "@/components/FeedbackPill";
+import { AlertList } from "@/components/AlertList";
+import { AlertFeedFooter } from "@/components/AlertFeedFooter";
 import { Loading } from "@/components/Loading";
 import { useToast } from "@/components/Toast";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useAlertFeed } from "@/hooks/useAlertFeed";
 import styles from "./index.module.css";
-import type { Subscription, Alert } from "@orbit/shared";
+import type { Subscription } from "@orbit/shared";
 
 function displayCriteria(sub: Subscription): string {
   const upgraded = sub.upgradedCriteria?.trim();
@@ -26,18 +29,29 @@ export default function SubscriptionDetail() {
   const router = useRouter();
   const { id } = router.query;
   const { toast } = useToast();
+  const { confirm } = useConfirmDialog();
   const [sub, setSub] = useState<Subscription | null>(null);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const orbitId = typeof id === "string" ? id : undefined;
+
+  const {
+    items: alerts,
+    total: alertTotal,
+    hasMore: alertsHasMore,
+    loading: alertsLoading,
+    loadingMore: alertsLoadingMore,
+    loadMore: loadMoreAlerts,
+  } = useAlertFeed({
+    subscriptionId: orbitId,
+    enabled: Boolean(orbitId),
+    pollIntervalMs: 15_000,
+  });
 
   useEffect(() => {
-    if (typeof id !== "string") return;
+    if (!orbitId) return;
     void fetch("/api/subscriptions")
       .then((r) => r.json())
-      .then((subs: Subscription[]) => setSub(subs.find((s) => s.id === id) ?? null));
-    void fetch("/api/alerts")
-      .then((r) => r.json())
-      .then((all: Alert[]) => setAlerts(all.filter((a) => a.subscriptionId === id)));
-  }, [id]);
+      .then((subs: Subscription[]) => setSub(subs.find((s) => s.id === orbitId) ?? null));
+  }, [orbitId]);
 
   async function togglePause() {
     if (!sub) return;
@@ -55,7 +69,14 @@ export default function SubscriptionDetail() {
   }
 
   async function remove() {
-    if (!sub || !confirm("Delete this orbit? This cannot be undone.")) return;
+    if (!sub) return;
+    const ok = await confirm({
+      title: "Delete this orbit?",
+      description: "This cannot be undone. Existing alerts for this orbit stay in your feed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     const res = await fetch(`/api/subscriptions/${sub.id}`, { method: "DELETE" });
     if (!res.ok) {
       toast("Failed to delete orbit", "error");
@@ -178,37 +199,29 @@ export default function SubscriptionDetail() {
               <h2 id="feed-heading" className={styles.panelTitle}>
                 Signal feed
               </h2>
-              {alerts.length > 0 ? (
-                <span className={styles.panelMeta}>{alerts.length} alert{alerts.length !== 1 ? "s" : ""}</span>
+              {alertTotal > 0 ? (
+                <span className={styles.panelMeta}>
+                  {alerts.length < alertTotal
+                    ? `Showing ${alerts.length} of ${alertTotal}`
+                    : `${alertTotal} alert${alertTotal !== 1 ? "s" : ""}`}
+                </span>
               ) : null}
             </div>
 
             <div className={styles.panelBody}>
-              {alerts.length === 0 ? (
+              {alertsLoading ? (
+                <Loading />
+              ) : alerts.length === 0 ? (
                 <p className={styles.empty}>No matching posts yet. Alerts appear when posts pass your criteria.</p>
               ) : (
-                <div className={styles.feed}>
-                  {alerts.map((a) => (
-                    <article key={a.id} className={styles.alert}>
-                      <div className={styles.alertTop}>
-                        <span className={styles.score}>{Math.round(a.score)}</span>
-                        <a
-                          className={styles.tweetLink}
-                          href={a.tweet.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          @{a.tweet.author}
-                        </a>
-                        <time className={styles.alertTime} dateTime={new Date(a.createdAt).toISOString()}>
-                          {formatWhen(a.createdAt)}
-                        </time>
-                      </div>
-                      <p className={styles.summary}>{a.summary}</p>
-                      <FeedbackPill alertId={a.id} />
-                    </article>
-                  ))}
-                </div>
+                <>
+                  <AlertList alerts={alerts} />
+                  <AlertFeedFooter
+                    hasMore={alertsHasMore}
+                    loadingMore={alertsLoadingMore}
+                    onLoadMore={() => void loadMoreAlerts()}
+                  />
+                </>
               )}
             </div>
           </section>

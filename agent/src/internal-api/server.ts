@@ -14,7 +14,8 @@ import {
   handleUpdateSubscription,
   handleDeleteSubscription,
   handleListSubscriptions,
-  listAlerts,
+  listAlertFeed,
+  parseAlertCursor,
   recordFeedback,
   handleCreateTelegramLink,
   handleGetWalletTelegram,
@@ -78,9 +79,19 @@ app.delete("/internal/subscriptions/:id", secretMiddleware, (c) => {
 app.get("/internal/alerts", secretMiddleware, (c) => {
   const wallet = c.req.query("wallet");
   if (!wallet) return c.json({ error: "wallet required" }, 400);
-  const since = Number(c.req.query("since") ?? 0);
-  const limit = Number(c.req.query("limit") ?? 50);
-  return c.json(listAlerts(wallet, since, limit));
+  const subscriptionId = c.req.query("subscriptionId") || undefined;
+  const limit = Number(c.req.query("limit") ?? 20);
+  const before = parseAlertCursor(c.req.query("before"));
+  const after = parseAlertCursor(c.req.query("after"));
+  return c.json(
+    listAlertFeed({
+      wallet,
+      subscriptionId,
+      limit: Number.isFinite(limit) ? limit : 20,
+      before,
+      after,
+    }),
+  );
 });
 
 app.post("/internal/feedback", secretMiddleware, async (c) => {

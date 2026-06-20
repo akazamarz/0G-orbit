@@ -5,6 +5,7 @@ import { ZG_CHAIN } from "@orbit/shared";
 import { useSession } from "@/hooks/useSession";
 import { signInWithWallet } from "@/lib/siwe-client";
 import { useToast } from "@/components/Toast";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 import styles from "./index.module.css";
 
 interface Props {
@@ -17,6 +18,7 @@ export function AuthButton({ onAuthed }: Props) {
   const { signMessageAsync } = useSignMessage();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
+  const { confirm } = useConfirmDialog();
   const [signing, setSigning] = useState(false);
   const wasConnected = useRef(false);
   const signingRef = useRef(false);
@@ -49,9 +51,16 @@ export function AuthButton({ onAuthed }: Props) {
   }, [address, wrongChain, signMessageAsync, refresh, onAuthed, toast]);
 
   const handleDisconnect = useCallback(async () => {
+    const ok = await confirm({
+      title: "Disconnect wallet?",
+      description: "You will be signed out of Orbit until you connect and sign in again.",
+      confirmLabel: "Disconnect",
+      tone: "danger",
+    });
+    if (!ok) return;
     await signOut();
     disconnect();
-  }, [signOut, disconnect]);
+  }, [confirm, signOut, disconnect]);
 
   useEffect(() => {
     if (wasConnected.current && !isConnected) {

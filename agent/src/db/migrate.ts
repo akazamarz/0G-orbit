@@ -120,3 +120,11 @@ export function migrateWalletTelegram(db: Database.Database): void {
     WHERE s.telegram_chat_id IS NOT NULL
   `);
 }
+
+/** Composite indexes for cursor-paginated alert feeds. */
+export function migrateAlertFeedIndexes(db: Database.Database): void {
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_alerts_wallet_created ON alerts(wallet, created_at);
+    CREATE INDEX IF NOT EXISTS idx_alerts_sub_created ON alerts(subscription_id, created_at);
+  `);
+}

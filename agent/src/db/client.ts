@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadConfig } from "@orbit/shared";
 import { SCHEMA_SQL } from "./schema.js";
-import { migrateSubscriptionsTable, migrateSubscriptionTopic, migrateSubscriptionPolling, migrateWalletTelegram, dropLegacySubscriptionColumns } from "./migrate.js";
+import { migrateSubscriptionsTable, migrateSubscriptionTopic, migrateSubscriptionPolling, migrateWalletTelegram, migrateAlertFeedIndexes, dropLegacySubscriptionColumns } from "./migrate.js";
 import { logger } from "../utils/logger.js";
 
 let db: Database.Database | null = null;
@@ -20,6 +20,7 @@ export function getDb(): Database.Database {
   migrateSubscriptionTopic(db);
   migrateSubscriptionPolling(db);
   migrateWalletTelegram(db);
+  migrateAlertFeedIndexes(db);
   dropLegacySubscriptionColumns(db);
   logger.info({ path: config.DB_PATH }, "sqlite initialized");
   return db;
