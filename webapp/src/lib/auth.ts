@@ -12,7 +12,7 @@ export interface Session {
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function generateNonce(): string {
-  return randomBytes(16).toString("base64url");
+  return randomBytes(16).toString("hex");
 }
 
 export function createSiweMessage(wallet: string, nonce: string): string {
@@ -28,10 +28,17 @@ export function createSiweMessage(wallet: string, nonce: string): string {
   return message.toMessage();
 }
 
-export async function verifySiwe(message: string, signature: string): Promise<string> {
+export async function verifySiwe(
+  message: string,
+  signature: string,
+  expectedNonce?: string,
+): Promise<string> {
   const siwe = new SiweMessage(message);
-  const result = await siwe.verify({ signature });
-  if (!result.success) throw new Error("invalid SIWE signature");
+  const result = await siwe.verify({ signature, nonce: expectedNonce });
+  if (!result.success) {
+    const err = result.error;
+    throw new Error(err?.type ?? "invalid SIWE signature");
+  }
   return siwe.address;
 }
 
@@ -67,4 +74,10 @@ export function getSessionFromCookies(cookieHeader: string | undefined): Session
   if (!cookieHeader) return null;
   const match = cookieHeader.match(/orbit_session=([^;]+)/);
   return match ? verifySessionToken(match[1]) : null;
+}
+
+export function getSiweNonceFromCookies(cookieHeader: string | undefined): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(/orbit_siwe_nonce=([^;]+)/);
+  return match?.[1] ?? null;
 }

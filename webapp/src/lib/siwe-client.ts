@@ -5,7 +5,7 @@ export async function signInWithWallet(
   address: string,
   signMessage: (args: { message: string }) => Promise<string>,
 ): Promise<string> {
-  const nonceRes = await fetch("/api/auth/nonce");
+  const nonceRes = await fetch("/api/auth/nonce", { credentials: "same-origin" });
   if (!nonceRes.ok) throw new Error("Could not get sign-in nonce");
   const { nonce } = (await nonceRes.json()) as { nonce: string };
 
@@ -17,12 +17,14 @@ export async function signInWithWallet(
     version: "1",
     chainId: ZG_CHAIN.chainId,
     nonce,
+    issuedAt: new Date().toISOString(),
   }).toMessage();
 
   const signature = await signMessage({ message });
   const verifyRes = await fetch("/api/auth/verify", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    credentials: "same-origin",
     body: JSON.stringify({ message, signature }),
   });
 
