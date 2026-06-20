@@ -25,17 +25,38 @@
   background: var(--accent-hover);
 }
 
-/* Compact header wallet button — scoped so modals (portaled to body) are untouched */
-.connect :global(button) {
-  font-size: 0.8rem !important;
-  font-weight: 600 !important;
+/* Compact header wallet control — size the container, not each inner segment */
+.connect :global([data-rk]) {
+  display: inline-flex;
+}
+
+.connect :global([data-rk] > div) {
+  height: 32px !important;
+  min-height: 32px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+.connect :global([data-rk] > div button) {
+  height: 100% !important;
+  min-height: unset !important;
+  padding: 0 8px !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: 1 !important;
+  gap: 4px !important;
+}
+
+/* Disconnected: single connect button without inner wrapper */
+.connect :global([data-rk] > button) {
   height: 32px !important;
   min-height: 32px !important;
   padding: 0 10px !important;
-  gap: 6px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
 }
 
-.connect :global(button img) {
+.connect :global([data-rk] img) {
   width: 18px !important;
   height: 18px !important;
 }

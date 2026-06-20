@@ -1,0 +1,22 @@
+/*
+ * RainbowKit wallet modals (connect + account) can anchor to the bottom when
+ * mobile UA detection or layout quirks apply align-items: flex-end on wide
+ * viewports. Only adjust overlay alignment on desktop — do not touch top/inset
+ * padding on the overlay (that collapses the modal into a bottom chip).
+ */
+@media screen and (min-width: 768px) {
+  [data-rk] [role="dialog"][aria-modal="true"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Undo mobile bottom-sheet offsets if those classes are present */
+  [data-rk] [role="dialog"][aria-modal="true"] [role="document"] {
+    top: auto !important;
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom-left-radius: var(--rk-radii-modal) !important;
+    border-bottom-right-radius: var(--rk-radii-modal) !important;
+  }
+}
