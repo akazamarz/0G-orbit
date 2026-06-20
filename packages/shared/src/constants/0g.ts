@@ -30,7 +30,6 @@ export const ATTESTATION_EIP712 = {
 export const X_API = {
   base: "https://api.twitterapi.io",
   advancedSearch: "https://api.twitterapi.io/twitter/tweet/advanced_search",
-  listTimeline: "https://api.twitterapi.io/twitter/list/tweets_timeline",
   costPerTweetUsd: 0.00015,
 } as const;
 

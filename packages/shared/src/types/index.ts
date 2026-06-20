@@ -47,6 +47,16 @@ export interface OrbitUpdate {
   pollIntervalMs?: number;
 }
 
+export type TweetFeedType = "original" | "self-reply" | "quote" | "retweet" | "reply-to-other";
+
+export interface TweetEmbed {
+  id: string;
+  text: string;
+  author: string;
+  url: string;
+  createdAt?: string;
+}
+
 export interface Tweet {
   id: string;
   text: string;
@@ -57,6 +67,13 @@ export interface Tweet {
   replyCount: number;
   lang: string;
   url: string;
+  isReply?: boolean;
+  inReplyToId?: string;
+  inReplyToUsername?: string;
+  conversationId?: string;
+  feedType?: TweetFeedType;
+  quotedTweet?: TweetEmbed;
+  retweetedTweet?: TweetEmbed;
 }
 
 export interface ScoredTweet extends Tweet {

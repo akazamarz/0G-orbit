@@ -8,7 +8,7 @@ import {
   upgradeOrbitIntent,
   fallbackUpgradedCriteria,
 } from "../ai/client.js";
-import { toEntityOrQuery, needsQueryRegeneration } from "../x/query.js";
+import { toEntityOrQuery, needsQueryRegeneration, buildListFeedQueryBase } from "../x/query.js";
 import { orbitColumnNames } from "../db/migrate.js";
 
 function rowToOrbit(row: Record<string, unknown>): Orbit {
@@ -50,8 +50,11 @@ async function buildUpgradedCriteria(input: {
 async function resolveGeneratedQuery(
   source: TrackSource,
   upgradedCriteria: string,
+  listId?: string,
 ): Promise<string> {
-  if (source === "list") return "";
+  if (source === "list") {
+    return listId ? buildListFeedQueryBase(listId) : "";
+  }
   const result = await trackToQuery(upgradedCriteria);
   const keywords = Array.isArray(result.keywords) ? result.keywords : [];
   return toEntityOrQuery(keywords.length > 0 ? keywords : (result.query ?? ""));
@@ -131,7 +134,7 @@ export async function createOrbit(input: OrbitInput): Promise<Orbit> {
     criteria: input.criteria,
     source: input.source,
   });
-  const generatedQuery = await resolveGeneratedQuery(input.source, upgradedCriteria);
+  const generatedQuery = await resolveGeneratedQuery(input.source, upgradedCriteria, listId ?? undefined);
   const config = loadConfig();
   const pollIntervalMs = input.pollIntervalMs ?? config.GLOBAL_POLL_INTERVAL_MS;
   const id = randomUUID();
@@ -186,7 +189,10 @@ export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbi
   const pollIntervalMs = update.pollIntervalMs ?? current.pollIntervalMs;
 
   const configChanged =
-    update.title !== undefined || update.topic !== undefined || update.criteria !== undefined;
+    update.title !== undefined ||
+    update.topic !== undefined ||
+    update.criteria !== undefined ||
+    update.listId !== undefined;
 
   let upgradedCriteria = current.upgradedCriteria;
   let generatedQuery = current.generatedQuery;
@@ -201,6 +207,9 @@ export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbi
     });
     if (current.source === "custom") {
       generatedQuery = await resolveGeneratedQuery("custom", upgradedCriteria);
+      queryVersion += 1;
+    } else if (current.source === "list" && listId) {
+      generatedQuery = buildListFeedQueryBase(listId);
       queryVersion += 1;
     }
   }
@@ -257,8 +266,26 @@ export function getUpgradedCriteria(orbit: Orbit): string {
   return fallbackUpgradedCriteria(orbit.title, orbit.topic, orbit.criteria);
 }
 
-/** Regenerate stored search query when it uses the legacy flat-OR format. */
+/** Regenerate stored query when stale (custom keywords or list feed template). */
 export async function refreshOrbitQueryIfStale(orbit: Orbit): Promise<Orbit> {
+  if (orbit.source === "list" && orbit.listId) {
+    const expected = buildListFeedQueryBase(orbit.listId);
+    if (orbit.generatedQuery === expected) return orbit;
+
+    const now = Date.now();
+    getDb()
+      .prepare(
+        `UPDATE orbits SET generated_query = ?, query_version = query_version + 1, updated_at = ? WHERE id = ?`,
+      )
+      .run(expected, now, orbit.id);
+
+    logger.info(
+      { id: orbit.id, oldQuery: orbit.generatedQuery, newQuery: expected },
+      "regenerated list feed query",
+    );
+    return getOrbit(orbit.id) ?? orbit;
+  }
+
   if (orbit.source !== "custom" || !needsQueryRegeneration(orbit.generatedQuery)) {
     return orbit;
   }
@@ -276,7 +303,7 @@ export async function refreshOrbitQueryIfStale(orbit: Orbit): Promise<Orbit> {
 
   logger.info(
     { id: orbit.id, oldQuery: orbit.generatedQuery, newQuery: generatedQuery },
-    "regenerated legacy flat-OR search query",
+    "regenerated legacy search query",
   );
   return getOrbit(orbit.id) ?? orbit;
 }

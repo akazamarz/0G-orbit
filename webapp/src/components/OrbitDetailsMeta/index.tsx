@@ -56,7 +56,7 @@ export function OrbitDetailsMeta({ orbit }: Props) {
 
       {orbit.generatedQuery ? (
         <div className={styles.metaRow}>
-          <dt>Search query</dt>
+          <dt>{orbit.source === "list" ? "List feed query" : "Search query"}</dt>
           <dd>
             <code className={styles.query}>{orbit.generatedQuery}</code>
           </dd>

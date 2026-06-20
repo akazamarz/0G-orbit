@@ -2,8 +2,16 @@ import { randomUUID } from "node:crypto";
 import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
-import { filterUnseen, markSeen, searchAllPages, listTimelineAllPages } from "../x/index.js";
-import { buildPollSearchQuery } from "../x/query.js";
+import {
+  applyOrbitCreatedFloor,
+  filterUnseen,
+  FIRST_POLL_MAX_PAGES,
+  markSeen,
+  searchAllPages,
+  tweetTextForEval,
+  groupAuthorThreads,
+} from "../x/index.js";
+import { buildPollSearchQuery, buildListPollQuery } from "../x/query.js";
 import { evaluateTweetBatch } from "../ai/client.js";
 import { sendAlert } from "../telegram/notify.js";
 import { getWalletTelegram } from "../telegram/wallet.js";
@@ -25,19 +33,47 @@ function chunk<T>(items: T[], size: number): T[][] {
   return batches;
 }
 
-function pollSinceTimestamp(orbit: Orbit, globalIntervalMs: number): Date {
-  const fallbackMs = globalIntervalMs + 60_000;
-  const sinceMs = orbit.lastPolledAt ?? orbit.createdAt ?? Date.now() - fallbackMs;
+/** Never poll before orbit creation; incremental polls resume from last poll start. */
+function pollSinceTimestamp(orbit: Orbit): Date {
+  const createdAt = orbit.createdAt ?? Date.now();
+  const sinceMs = Math.max(createdAt, orbit.lastPolledAt ?? createdAt);
   return new Date(sinceMs);
 }
 
-async function fetchTweets(orbit: Orbit, globalIntervalMs: number): Promise<Tweet[]> {
+async function fetchTweets(orbit: Orbit, until: Date): Promise<Tweet[]> {
+  const since = pollSinceTimestamp(orbit);
+  const isFirstPoll = orbit.lastPolledAt == null;
+  const maxPages = isFirstPoll ? FIRST_POLL_MAX_PAGES : undefined;
+
   if (orbit.source === "list") {
     if (!orbit.listId) {
       logger.warn({ id: orbit.id }, "list orbit missing listId");
       return [];
     }
-    return listTimelineAllPages(orbit.listId, { orbitId: orbit.id });
+    const pollQuery = buildListPollQuery(orbit.listId, since, until);
+    logger.info(
+      {
+        orbitId: orbit.id,
+        listId: orbit.listId,
+        pollQuery,
+        sinceMs: since.getTime(),
+        untilMs: until.getTime(),
+        isFirstPoll,
+        maxPages: maxPages ?? "default",
+      },
+      "x list feed poll starting",
+    );
+    const tweets = await searchAllPages(pollQuery, {
+      orbitId: orbit.id,
+      listId: orbit.listId,
+      kind: "list",
+      maxPages,
+    });
+    const threads = groupAuthorThreads(tweets);
+    if (threads.length > 0) {
+      logger.debug({ orbitId: orbit.id, threadCount: threads.length }, "author thread groups in list feed");
+    }
+    return tweets;
   }
 
   if (!orbit.generatedQuery) {
@@ -45,21 +81,27 @@ async function fetchTweets(orbit: Orbit, globalIntervalMs: number): Promise<Twee
     return [];
   }
 
-  const since = pollSinceTimestamp(orbit, globalIntervalMs);
-  const pollQuery = buildPollSearchQuery(orbit.generatedQuery, since);
+  const pollQuery = buildPollSearchQuery(orbit.generatedQuery, since, until);
   logger.info(
-    { orbitId: orbit.id, pollQuery, sinceMs: since.getTime() },
+    {
+      orbitId: orbit.id,
+      pollQuery,
+      sinceMs: since.getTime(),
+      untilMs: until.getTime(),
+      isFirstPoll,
+      maxPages: maxPages ?? "default",
+    },
     "x search poll starting",
   );
 
-  return searchAllPages(pollQuery, { orbitId: orbit.id });
+  return searchAllPages(pollQuery, { orbitId: orbit.id, kind: "search", maxPages });
 }
 
 export async function runOrbit(orbitId: string): Promise<void> {
   let fresh = getOrbit(orbitId);
   if (!fresh || fresh.paused) return;
 
-  if (fresh.source === "custom") {
+  if (fresh.source === "custom" || fresh.source === "list") {
     fresh = await refreshOrbitQueryIfStale(fresh);
   }
 
@@ -67,6 +109,7 @@ export async function runOrbit(orbitId: string): Promise<void> {
   const upgradedCriteria = getUpgradedCriteria(fresh);
   const polledAt = Date.now();
   const batchSize = config.AI_BATCH_SIZE;
+  const orbitCreatedAt = fresh.createdAt ?? polledAt;
 
   logger.info(
     {
@@ -75,6 +118,7 @@ export async function runOrbit(orbitId: string): Promise<void> {
       baseQuery: fresh.generatedQuery,
       listId: fresh.listId,
       lastPolledAt: fresh.lastPolledAt,
+      createdAt: orbitCreatedAt,
       batchSize,
     },
     "polling orbit",
@@ -84,10 +128,19 @@ export async function runOrbit(orbitId: string): Promise<void> {
 
   let tweets: Tweet[];
   try {
-    tweets = await fetchTweets(fresh, config.GLOBAL_POLL_INTERVAL_MS);
+    tweets = await fetchTweets(fresh, new Date(polledAt));
   } catch (err) {
     logger.error({ err, orbitId: fresh.id }, "fetch tweets failed");
     return;
+  }
+
+  const beforeFloor = tweets.length;
+  tweets = applyOrbitCreatedFloor(fresh.id, tweets, orbitCreatedAt);
+  if (beforeFloor > tweets.length) {
+    logger.debug(
+      { orbitId: fresh.id, dropped: beforeFloor - tweets.length, floorMs: orbitCreatedAt },
+      "dropped tweets before orbit creation",
+    );
   }
 
   const unseen = filterUnseen(fresh.id, tweets);
@@ -101,7 +154,7 @@ export async function runOrbit(orbitId: string): Promise<void> {
     const indexed = batch.map((tweet, index) => ({
       index,
       id: tweet.id,
-      text: tweet.text,
+      text: tweetTextForEval(tweet),
     }));
 
     try {

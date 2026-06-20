@@ -58,9 +58,28 @@ export function formatTwitterSince(date: Date): string {
   return `since_time:${Math.floor(date.getTime() / 1000)}`;
 }
 
-export function buildPollSearchQuery(baseQuery: string, since: Date): string {
+export function formatTwitterUntil(date: Date): string {
+  return `until_time:${Math.floor(date.getTime() / 1000)}`;
+}
+
+/** Base list feed query (no time bounds) — stored for display. */
+export function buildListFeedQueryBase(listId: string): string {
+  return `list:${listId} (-filter:replies OR filter:self_threads) include:nativeretweets`;
+}
+
+function formatPollTimeBounds(since: Date, until: Date): string {
+  return `${formatTwitterSince(since)} ${formatTwitterUntil(until)}`;
+}
+
+/** Full list poll query with incremental time window (Unix seconds). */
+export function buildListPollQuery(listId: string, since: Date, until = new Date()): string {
+  return `${buildListFeedQueryBase(listId)} ${formatPollTimeBounds(since, until)}`;
+}
+
+export function buildPollSearchQuery(baseQuery: string, since: Date, until = new Date()): string {
   const core = sanitizeSearchQuery(baseQuery);
-  return core ? `${core} ${formatTwitterSince(since)}` : formatTwitterSince(since);
+  const bounds = formatPollTimeBounds(since, until);
+  return core ? `${core} ${bounds}` : bounds;
 }
 
 /** Regenerate when stored query is empty, has legacy AND-joined segments, or needs cleanup. */
