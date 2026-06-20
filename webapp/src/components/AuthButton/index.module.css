@@ -25,6 +25,21 @@
   background: var(--accent-hover);
 }
 
+/* Compact header wallet button — scoped so modals (portaled to body) are untouched */
+.connect :global(button) {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 10px !important;
+  gap: 6px !important;
+}
+
+.connect :global(button img) {
+  width: 18px !important;
+  height: 18px !important;
+}
+
 @media (max-width: 768px) {
   .wrap {
     flex-wrap: nowrap;

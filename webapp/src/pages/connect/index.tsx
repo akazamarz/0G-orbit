@@ -37,10 +37,7 @@ export default function Connect() {
       <Head>
         <title>Connect Telegram - Orbit</title>
       </Head>
-      <AppShell
-        title="Connect Telegram"
-        subtitle="Link your account to receive alerts and daily digests."
-      >
+      <AppShell title="Connect Telegram">
         <div className={styles.steps}>
           <div className={`${styles.step} ${isAuthed ? styles.stepDone : styles.stepActive}`}>
             <span className={styles.stepNum}>1</span>

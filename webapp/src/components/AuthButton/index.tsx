@@ -76,11 +76,13 @@ export function AuthButton({ onAuthed }: Props) {
         </button>
       )}
 
-      <ConnectButton
-        showBalance={false}
-        chainStatus={wrongChain ? "icon" : "none"}
-        accountStatus={sessionMatches ? "avatar" : "address"}
-      />
+      <div className={styles.connect}>
+        <ConnectButton
+          showBalance={false}
+          chainStatus={wrongChain ? "icon" : "none"}
+          accountStatus={sessionMatches ? "avatar" : "address"}
+        />
+      </div>
     </div>
   );
 }

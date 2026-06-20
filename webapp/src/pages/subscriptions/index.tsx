@@ -53,10 +53,7 @@ export default function NewSubscription() {
       <Head>
         <title>New orbit - Orbit</title>
       </Head>
-      <AppShell
-        title="Create orbit"
-        subtitle="Describe what you want to track — the query is built automatically."
-      >
+      <AppShell title="Create orbit">
         {loading ? (
           <p className={styles.muted}>Loading…</p>
         ) : !isAuthed ? (
