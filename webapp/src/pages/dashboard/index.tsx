@@ -112,7 +112,7 @@ export default function Dashboard() {
             <section className={styles.section}>
               <h2 className={styles.heading}>Your orbits</h2>
               {dataLoading ? (
-                <Loading label="Loading orbits…" />
+                <Loading />
               ) : subs.length === 0 ? (
                 <EmptyState
                   title="No orbits yet"

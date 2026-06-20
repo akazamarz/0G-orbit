@@ -26,7 +26,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!mounted) {
-    return <Loading label="Loading wallet…" variant="full" />;
+    return <Loading variant="full" />;
   }
 
   return (

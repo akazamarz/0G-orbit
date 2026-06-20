@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "dotenv -e .env -- pnpm -r --parallel run dev",
+    "dev:webapp": "dotenv -e .env -- pnpm --filter @orbit/webapp dev",
+    "dev:agent": "dotenv -e .env -- pnpm --filter @orbit/agent dev",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",

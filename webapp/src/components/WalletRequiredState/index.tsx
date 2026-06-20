@@ -1,10 +1,16 @@
-import { EmptyState } from "@/components/EmptyState";
+import styles from "./index.module.css";
 
 export function WalletRequiredState() {
   return (
-    <EmptyState
-      title="Connect your wallet"
-      description="Click Connect Wallet in the header — you'll be asked to sign once to verify ownership, then you're in."
-    />
+    <div className={styles.wrap}>
+      <div className={styles.icon} aria-hidden>
+        🛰️
+      </div>
+      <h3 className={styles.title}>Connect your wallet</h3>
+      <p className={styles.description}>
+        Click the Connect Wallet button — you&apos;ll be asked to sign once to verify ownership,
+        then you&apos;re in.
+      </p>
+    </div>
   );
 }

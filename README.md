@@ -35,8 +35,12 @@ Optional: `ORBIT_ATTESTATION_ADDRESS` after deploying `OrbitAttestation.sol`.
 pnpm dev
 
 # Or individually:
-pnpm dev --filter @orbit/agent   # API server on 127.0.0.1:4000
-pnpm dev --filter webapp         # Next.js on 127.0.0.1:3000
+pnpm dev:agent                  # API server on 127.0.0.1:4000
+pnpm dev:webapp                 # Next.js on 127.0.0.1:3000
+
+# Equivalent (filter must come *before* the script name):
+pnpm --filter @orbit/agent dev
+pnpm --filter @orbit/webapp dev
 ```
 
 The webapp proxies API calls to the agent. Both must be running together for local development.
