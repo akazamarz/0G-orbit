@@ -4,17 +4,29 @@ import { OrbitLogo } from "@/components/OrbitLogo";
 import styles from "./index.module.css";
 
 const STEPS = [
-  { title: "Define your orbit", desc: "Describe what you want to track in plain English." },
-  { title: "AI filters the noise", desc: "DeepSeek scores tweets and writes briefings." },
-  { title: "Get alerted", desc: "Live signals or daily digests on Telegram, stored on 0G." },
+  {
+    title: "Define your orbit",
+    desc: "Describe what to watch — a topic, keyword, or X list — in plain English.",
+  },
+  {
+    title: "AI filters the noise",
+    desc: "Every match is scored for relevance. Only the signal gets through.",
+  },
+  {
+    title: "Get alerted on 0G",
+    desc: "Live Telegram alerts plus a dashboard feed. Orbits and alerts persist on 0G Storage; attest in one signature on 0G Chain.",
+  },
 ];
 
 export default function Home() {
   return (
     <>
       <Head>
-        <title>Orbit - X intelligence, on-chain</title>
-        <meta name="description" content="AI-powered X intelligence agent with decentralised storage on 0G." />
+        <title>Orbit — X intelligence on 0G</title>
+        <meta
+          name="description"
+          content="AI-powered X monitoring with Telegram alerts, 0G Storage, and on-chain attestation on Galileo testnet."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <main className={styles.page}>
@@ -34,8 +46,9 @@ export default function Home() {
             Your <span className={styles.gradient}>orbit</span> around X.
           </h1>
           <p className={styles.subtitle}>
-            Subscribe to accounts, lists, or topics. AI scores the signal, briefs the noise, and alerts you on
-            Telegram - anchored on 0G decentralised infrastructure.
+            Track lists and topics in plain English. AI scores what matters, delivers sharp alerts on
+            Telegram, and anchors every orbit and alert on 0G Storage — with optional on-chain proof on 0G
+            Chain.
           </p>
           <div className={styles.ctas}>
             <Link href="/dashboard" className={styles.primary}>

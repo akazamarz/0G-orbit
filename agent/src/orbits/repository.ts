@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { parseListId, loadConfig } from "@orbit/shared";
+import { parseListId, loadConfig, getOrbitCreateLimitError } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import type { Orbit, OrbitInput, OrbitUpdate, TrackSource } from "@orbit/shared";
@@ -127,6 +127,11 @@ function insertOrbitRow(row: NewOrbitRow): void {
 }
 
 export async function createOrbit(input: OrbitInput): Promise<Orbit> {
+  const limitError = getOrbitCreateLimitError(listOrbits(input.wallet), input.source);
+  if (limitError) {
+    throw Object.assign(new Error(limitError), { status: 403 });
+  }
+
   const listId = resolveListId(input);
   const topic = input.source === "custom" ? (input.topic?.trim() || input.title.trim()) : undefined;
   const upgradedCriteria = await buildUpgradedCriteria({

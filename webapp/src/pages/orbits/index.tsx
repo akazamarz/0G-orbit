@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { parseListId } from "@orbit/shared";
+import { parseListId, getOrbitCreateLimitError } from "@orbit/shared";
 import { AppShell } from "@/components/AppShell";
 import { OrbitDetailsMeta } from "@/components/OrbitDetailsMeta";
 import { Loading } from "@/components/Loading";
@@ -104,11 +104,28 @@ export default function OrbitPage() {
     }
   }
 
+  function selectSource(next: TrackSource) {
+    if (isEdit) return;
+    const limitError = getOrbitCreateLimitError(orbits, next);
+    if (limitError) {
+      toast(limitError, "error");
+      return;
+    }
+    setSource(next);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (source === "list" && !parseListId(listInput)) {
       toast("Enter a valid X list URL or numeric list ID", "error");
       return;
+    }
+    if (!isEdit) {
+      const limitError = getOrbitCreateLimitError(orbits, source);
+      if (limitError) {
+        toast(limitError, "error");
+        return;
+      }
     }
     setBusy(true);
     try {
@@ -260,7 +277,7 @@ export default function OrbitPage() {
                     <button
                       type="button"
                       className={source === "list" ? styles.sourceActive : styles.source}
-                      onClick={() => !isEdit && setSource("list")}
+                      onClick={() => selectSource("list")}
                       aria-pressed={source === "list"}
                       disabled={isEdit}
                     >
@@ -270,7 +287,7 @@ export default function OrbitPage() {
                     <button
                       type="button"
                       className={source === "custom" ? styles.sourceActive : styles.source}
-                      onClick={() => !isEdit && setSource("custom")}
+                      onClick={() => selectSource("custom")}
                       aria-pressed={source === "custom"}
                       disabled={isEdit}
                     >

@@ -50,9 +50,14 @@ app.get("/internal/health", (c) => {
 });
 
 app.post("/internal/orbits", secretMiddleware, async (c) => {
-  const body = (await c.req.json()) as OrbitInput;
-  const orbit = await handleCreateOrbit(body);
-  return c.json(orbit, 201);
+  try {
+    const body = (await c.req.json()) as OrbitInput;
+    const orbit = await handleCreateOrbit(body);
+    return c.json(orbit, 201);
+  } catch (err) {
+    const status = (err as Error & { status?: number }).status ?? 500;
+    return c.json({ error: (err as Error).message }, status as 403 | 500);
+  }
 });
 
 app.get("/internal/orbits", secretMiddleware, (c) => {

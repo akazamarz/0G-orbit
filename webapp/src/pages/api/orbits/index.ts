@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSessionFromCookies } from "@/lib/auth";
-import { agentFetch } from "@/lib/agent-client";
+import { agentFetch, AgentError } from "@/lib/agent-client";
 import type { Orbit, OrbitInput } from "@orbit/shared";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(405).json({ error: "method not allowed" });
   } catch (err) {
-    return res.status(500).json({ error: (err as Error).message });
+    const status = err instanceof AgentError ? err.status : 500;
+    return res.status(status).json({ error: (err as Error).message });
   }
 }
