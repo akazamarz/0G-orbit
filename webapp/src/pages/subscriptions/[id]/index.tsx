@@ -88,6 +88,9 @@ export default function SubscriptionDetail() {
           </>
         }
       >
+        {sub.source === "custom" && sub.topic ? (
+          <p className={styles.listMeta}>Topic: {sub.topic}</p>
+        ) : null}
         <p className={styles.criteria}>{sub.criteria}</p>
         {sub.source === "custom" && sub.generatedQuery ? (
           <code className={styles.query}>{sub.generatedQuery}</code>

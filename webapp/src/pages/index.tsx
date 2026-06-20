@@ -16,7 +16,6 @@ export default function Home() {
         <title>Orbit - X intelligence, on-chain</title>
         <meta name="description" content="AI-powered X intelligence agent with decentralised storage on 0G." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/images/orbit-logo.png" />
       </Head>
       <main className={styles.page}>
         <div className={styles.bg} aria-hidden />

@@ -6,7 +6,10 @@ export interface Subscription {
   id: string;
   wallet: string;
   source: TrackSource;
+  /** User-facing orbit name (dashboard, Telegram, etc.). */
   title: string;
+  /** Custom-topic search subject; drives AI query generation. */
+  topic?: string;
   criteria: string;
   listId?: string;
   notifyTelegram: boolean;
@@ -23,6 +26,7 @@ export interface SubscriptionInput {
   wallet: string;
   source: TrackSource;
   title: string;
+  topic?: string;
   criteria: string;
   listId?: string;
   notifyTelegram: boolean;
@@ -32,6 +36,7 @@ export interface SubscriptionInput {
 
 export interface SubscriptionUpdate {
   title?: string;
+  topic?: string;
   criteria?: string;
   listId?: string;
   notifyTelegram?: boolean;

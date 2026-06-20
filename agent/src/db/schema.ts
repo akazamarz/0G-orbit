@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   wallet TEXT NOT NULL,
   source TEXT NOT NULL DEFAULT 'custom',
   title TEXT NOT NULL,
+  topic TEXT,
   criteria TEXT NOT NULL,
   list_id TEXT,
   notify_telegram INTEGER NOT NULL DEFAULT 0,

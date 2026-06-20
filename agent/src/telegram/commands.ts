@@ -1,8 +1,13 @@
-import type { Bot } from "grammy";
+import type { Bot, Context } from "grammy";
 import { getDb } from "../db/client.js";
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
 import { getWalletByChatId } from "./wallet.js";
-import { buildOrbitPickerKeyboard } from "./keyboards.js";
+import {
+  decodeCallbackData,
+  encodeCallbackData,
+  inlineKeyboardColumn,
+  truncateButtonLabel,
+} from "./keyboards.js";
 import {
   HTML_REPLY,
   feedbackMessage,
@@ -17,6 +22,9 @@ import {
   resumePickerMessage,
   resumeSuccessMessage,
 } from "./messages.js";
+
+const ORBIT_CALLBACK = "orbit" as const;
+const ORBIT_ACTION = { Pause: "pause", Resume: "resume" } as const;
 
 interface OrbitRow {
   id: string;
@@ -40,6 +48,58 @@ function getOrbit(wallet: string, orbitId: string): { id: string; title: string;
   return row ?? null;
 }
 
+function orbitPickerKeyboard(
+  action: (typeof ORBIT_ACTION)[keyof typeof ORBIT_ACTION],
+  orbits: { id: string; title: string }[],
+) {
+  return inlineKeyboardColumn(
+    orbits.map((orbit) => ({
+      label: truncateButtonLabel(orbit.title, "Untitled orbit"),
+      callbackData: encodeCallbackData(ORBIT_CALLBACK, action, orbit.id),
+    })),
+  );
+}
+
+async function handleOrbitCallback(ctx: Context, action: string, orbitId: string): Promise<void> {
+  const chatId = ctx.callbackQuery?.message?.chat.id;
+  if (!chatId) return;
+
+  if (action !== ORBIT_ACTION.Pause && action !== ORBIT_ACTION.Resume) return;
+
+  const linked = getWalletByChatId(chatId);
+  if (!linked) {
+    await ctx.answerCallbackQuery({ text: "Link your wallet in the Orbit app first.", show_alert: true });
+    return;
+  }
+
+  const orbit = getOrbit(linked.wallet, orbitId);
+  if (!orbit) {
+    await ctx.answerCallbackQuery({ text: "That orbit was not found.", show_alert: true });
+    return;
+  }
+
+  if (action === ORBIT_ACTION.Pause) {
+    if (orbit.paused) {
+      await ctx.answerCallbackQuery({ text: `${orbit.title} is already paused.` });
+      return;
+    }
+    getDb().prepare("UPDATE subscriptions SET paused = 1, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
+    pauseSubscription(orbit.id);
+    await ctx.answerCallbackQuery({ text: `Paused: ${orbit.title}` });
+    await ctx.editMessageText(pauseSuccessMessage(orbit.title), HTML_REPLY);
+    return;
+  }
+
+  if (!orbit.paused) {
+    await ctx.answerCallbackQuery({ text: `${orbit.title} is already active.` });
+    return;
+  }
+  getDb().prepare("UPDATE subscriptions SET paused = 0, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
+  resumeSubscription(orbit.id);
+  await ctx.answerCallbackQuery({ text: `Resumed: ${orbit.title}` });
+  await ctx.editMessageText(resumeSuccessMessage(orbit.title), HTML_REPLY);
+}
+
 export function registerCommands(bot: Bot): void {
   bot.command("help", async (ctx) => {
     await ctx.reply(helpMessage(), HTML_REPLY);
@@ -60,10 +120,7 @@ export function registerCommands(bot: Bot): void {
     if (active.length === 0) return ctx.reply(noActiveOrbitsToPauseMessage(), HTML_REPLY);
     await ctx.reply(pausePickerMessage(), {
       ...HTML_REPLY,
-      reply_markup: buildOrbitPickerKeyboard(
-        "pause",
-        active.map((o) => ({ id: o.id, title: o.title })),
-      ),
+      reply_markup: orbitPickerKeyboard(ORBIT_ACTION.Pause, active),
     });
   });
 
@@ -74,10 +131,7 @@ export function registerCommands(bot: Bot): void {
     if (paused.length === 0) return ctx.reply(noPausedOrbitsMessage(), HTML_REPLY);
     await ctx.reply(resumePickerMessage(), {
       ...HTML_REPLY,
-      reply_markup: buildOrbitPickerKeyboard(
-        "resume",
-        paused.map((o) => ({ id: o.id, title: o.title })),
-      ),
+      reply_markup: orbitPickerKeyboard(ORBIT_ACTION.Resume, paused),
     });
   });
 
@@ -86,45 +140,11 @@ export function registerCommands(bot: Bot): void {
   });
 
   bot.on("callback_query:data", async (ctx) => {
-    const data = ctx.callbackQuery.data;
-    const chatId = ctx.callbackQuery.message?.chat.id;
-    if (!chatId) return;
+    const decoded = decodeCallbackData(ctx.callbackQuery.data);
+    if (!decoded) return;
 
-    const action = data.startsWith("pause:") ? "pause" : data.startsWith("resume:") ? "resume" : null;
-    if (!action) return;
-
-    const orbitId = data.slice(action.length + 1);
-    const linked = getWalletByChatId(chatId);
-    if (!linked) {
-      await ctx.answerCallbackQuery({ text: "Link your wallet in the Orbit app first.", show_alert: true });
-      return;
+    if (decoded.namespace === ORBIT_CALLBACK) {
+      await handleOrbitCallback(ctx, decoded.action, decoded.payload);
     }
-
-    const orbit = getOrbit(linked.wallet, orbitId);
-    if (!orbit) {
-      await ctx.answerCallbackQuery({ text: "That orbit was not found.", show_alert: true });
-      return;
-    }
-
-    if (action === "pause") {
-      if (orbit.paused) {
-        await ctx.answerCallbackQuery({ text: `${orbit.title} is already paused.` });
-        return;
-      }
-      getDb().prepare("UPDATE subscriptions SET paused = 1, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
-      pauseSubscription(orbit.id);
-      await ctx.answerCallbackQuery({ text: `Paused: ${orbit.title}` });
-      await ctx.editMessageText(pauseSuccessMessage(orbit.title), HTML_REPLY);
-      return;
-    }
-
-    if (!orbit.paused) {
-      await ctx.answerCallbackQuery({ text: `${orbit.title} is already active.` });
-      return;
-    }
-    getDb().prepare("UPDATE subscriptions SET paused = 0, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
-    resumeSubscription(orbit.id);
-    await ctx.answerCallbackQuery({ text: `Resumed: ${orbit.title}` });
-    await ctx.editMessageText(resumeSuccessMessage(orbit.title), HTML_REPLY);
   });
 }

@@ -14,7 +14,9 @@ export default function NewSubscription() {
   const { isAuthed, loading } = useSession();
   const { toast } = useToast();
   const [source, setSource] = useState<TrackSource>("custom");
-  const [title, setTitle] = useState("");
+  const [orbitName, setOrbitName] = useState("");
+  const [topic, setTopic] = useState("");
+  const [listInput, setListInput] = useState("");
   const [criteria, setCriteria] = useState("");
   const [notifyTelegram, setNotifyTelegram] = useState(true);
   const [created, setCreated] = useState<Subscription | null>(null);
@@ -22,7 +24,7 @@ export default function NewSubscription() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (source === "list" && !parseListId(title)) {
+    if (source === "list" && !parseListId(listInput)) {
       toast("Enter a valid X list URL or numeric list ID", "error");
       return;
     }
@@ -33,9 +35,10 @@ export default function NewSubscription() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           source,
-          title: title.trim(),
+          title: orbitName.trim(),
+          topic: source === "custom" ? topic.trim() : undefined,
           criteria: criteria.trim(),
-          listId: source === "list" ? title.trim() : undefined,
+          listId: source === "list" ? listInput.trim() : undefined,
           notifyTelegram,
         }),
       });
@@ -45,7 +48,9 @@ export default function NewSubscription() {
       }
       const sub = (await res.json()) as Subscription;
       setCreated(sub);
-      setTitle("");
+      setOrbitName("");
+      setTopic("");
+      setListInput("");
       setCriteria("");
       toast("Orbit created", "success");
     } catch (err) {
@@ -106,22 +111,55 @@ export default function NewSubscription() {
                 </div>
                 <div className={styles.panelBody}>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="title">
-                      {source === "list" ? "List URL or ID" : "Topic"}
+                    <label className={styles.label} htmlFor="orbit-name">
+                      Orbit name
                     </label>
                     <input
-                      id="title"
+                      id="orbit-name"
                       className={styles.input}
-                      placeholder={
-                        source === "list"
-                          ? "https://x.com/i/lists/1234567890"
-                          : "e.g. New AI model releases"
-                      }
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. AI releases watch"
+                      value={orbitName}
+                      onChange={(e) => setOrbitName(e.target.value)}
                       required
                     />
+                    <span className={styles.fieldHint}>
+                      Shown on your dashboard and in Telegram when you pause or get alerts.
+                    </span>
                   </div>
+
+                  {source === "list" ? (
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="list-input">
+                        List URL or ID
+                      </label>
+                      <input
+                        id="list-input"
+                        className={styles.input}
+                        placeholder="https://x.com/i/lists/1234567890"
+                        value={listInput}
+                        onChange={(e) => setListInput(e.target.value)}
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="topic">
+                        Topic
+                      </label>
+                      <input
+                        id="topic"
+                        className={styles.input}
+                        placeholder="e.g. New AI model releases"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        required
+                      />
+                      <span className={styles.fieldHint}>
+                        What Orbit searches for on X. Used to build your query — separate from the
+                        display name.
+                      </span>
+                    </div>
+                  )}
 
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="criteria">
@@ -169,6 +207,9 @@ export default function NewSubscription() {
                   <h2 className={styles.panelTitle}>Orbit created</h2>
                 </div>
                 <div className={styles.panelBody}>
+                  <p className={styles.createdName}>
+                    <strong>{created.title}</strong> is live.
+                  </p>
                   {created.source === "custom" && created.generatedQuery ? (
                     <>
                       <p className={styles.queryLabel}>AI-generated query</p>

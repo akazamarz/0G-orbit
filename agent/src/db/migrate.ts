@@ -39,6 +39,20 @@ export function migrateSubscriptionsTable(db: Database.Database): void {
   }
 }
 
+/** Add topic column for custom orbits (search subject separate from display title). */
+export function migrateSubscriptionTopic(db: Database.Database): void {
+  const cols = columnNames(db);
+  if (cols.size === 0) return;
+  if (!cols.has("topic")) {
+    db.exec(`ALTER TABLE subscriptions ADD COLUMN topic TEXT`);
+    db.exec(`
+      UPDATE subscriptions
+      SET topic = title
+      WHERE source = 'custom' AND (topic IS NULL OR topic = '')
+    `);
+  }
+}
+
 /** Create wallet_telegram and backfill from legacy subscriptions.telegram_chat_id. */
 export function migrateWalletTelegram(db: Database.Database): void {
   db.exec(`

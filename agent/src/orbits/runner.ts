@@ -10,6 +10,11 @@ import type { Alert, Subscription, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
 
+function scoringSubject(sub: Subscription): string {
+  if (sub.source === "custom" && sub.topic) return sub.topic;
+  return sub.title;
+}
+
 async function fetchTweets(sub: Subscription): Promise<Tweet[]> {
   if (sub.source === "list") {
     if (!sub.listId) {
@@ -45,7 +50,7 @@ export async function runSubscription(sub: Subscription): Promise<void> {
 
   for (const tweet of unseen) {
     markSeen(fresh.id, tweet.id);
-    const { score, reason } = await scoreTweet(fresh.title, fresh.criteria, tweet.text);
+    const { score, reason } = await scoreTweet(scoringSubject(fresh), fresh.criteria, tweet.text);
     if (score < SCORE_THRESHOLD) continue;
 
     const { summary } = await briefAlert(tweet.text);

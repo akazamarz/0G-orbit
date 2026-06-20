@@ -94,6 +94,12 @@
   gap: var(--space-2);
 }
 
+.fieldHint {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+
 .label {
   font-size: 0.7rem;
   color: var(--fg-muted);
@@ -246,6 +252,12 @@
 }
 
 /* ── Success ── */
+.createdName {
+  font-size: 0.95rem;
+  color: var(--fg);
+  margin-bottom: var(--space-2);
+}
+
 .queryLabel {
   font-size: 0.7rem;
   font-weight: 600;

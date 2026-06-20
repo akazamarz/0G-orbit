@@ -11,6 +11,7 @@ function rowToSub(row: Record<string, unknown>): Subscription {
     wallet: String(row.wallet),
     source: String(row.source ?? "custom") as TrackSource,
     title: String(row.title ?? row.intent ?? ""),
+    topic: (row.topic as string) ?? undefined,
     criteria: String(row.criteria ?? row.intent ?? ""),
     listId: (row.list_id as string) ?? undefined,
     notifyTelegram: Boolean(row.notify_telegram),
@@ -26,15 +27,14 @@ function rowToSub(row: Record<string, unknown>): Subscription {
 
 async function resolveGeneratedQuery(input: SubscriptionInput): Promise<string> {
   if (input.source === "list") return "";
-  const { query } = await trackToQuery(input.title, input.criteria);
+  const topic = input.topic?.trim() || input.title.trim();
+  const { query } = await trackToQuery(topic, input.criteria);
   return query;
 }
 
 function resolveListId(input: SubscriptionInput): string | undefined {
   if (input.source !== "list") return undefined;
-  const fromField = input.listId ? parseListId(input.listId) : null;
-  const fromTitle = parseListId(input.title);
-  const listId = fromField ?? fromTitle;
+  const listId = input.listId ? parseListId(input.listId) : null;
   if (!listId) throw new Error("invalid X list URL or ID");
   return listId;
 }
@@ -42,6 +42,7 @@ function resolveListId(input: SubscriptionInput): string | undefined {
 export async function createSubscription(input: SubscriptionInput): Promise<Subscription> {
   const listId = resolveListId(input);
   const generatedQuery = await resolveGeneratedQuery(input);
+  const topic = input.source === "custom" ? (input.topic?.trim() || input.title.trim()) : null;
   const id = randomUUID();
   const now = Date.now();
   const pollIntervalMs = input.pollIntervalMs ?? Number(process.env.X_POLL_INTERVAL_MS ?? 300000);
@@ -49,14 +50,15 @@ export async function createSubscription(input: SubscriptionInput): Promise<Subs
   getDb()
     .prepare(
       `INSERT INTO subscriptions
-        (id, wallet, source, title, criteria, list_id, notify_telegram, generated_query, query_version, poll_interval_ms, paused, storage_root, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, ?)`,
+        (id, wallet, source, title, topic, criteria, list_id, notify_telegram, generated_query, query_version, poll_interval_ms, paused, storage_root, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, ?)`,
     )
     .run(
       id,
       input.wallet,
       input.source,
       input.title.trim(),
+      topic,
       input.criteria.trim(),
       listId ?? null,
       input.notifyTelegram ? 1 : 0,
@@ -90,6 +92,10 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
   if (!current) return null;
 
   const title = update.title?.trim() ?? current.title;
+  const topic =
+    update.topic !== undefined
+      ? update.topic.trim() || undefined
+      : current.topic;
   const criteria = update.criteria?.trim() ?? current.criteria;
   const listId = update.listId !== undefined ? parseListId(update.listId) ?? update.listId : current.listId;
   const notifyTelegram = update.notifyTelegram ?? current.notifyTelegram;
@@ -98,8 +104,12 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
 
   let generatedQuery = current.generatedQuery;
   let queryVersion = current.queryVersion;
-  if (current.source === "custom" && (update.criteria !== undefined || update.title !== undefined)) {
-    const { query } = await trackToQuery(title, criteria);
+  if (
+    current.source === "custom" &&
+    (update.criteria !== undefined || update.topic !== undefined)
+  ) {
+    const searchTopic = topic ?? title;
+    const { query } = await trackToQuery(searchTopic, criteria);
     generatedQuery = query;
     queryVersion += 1;
   }
@@ -108,12 +118,13 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
   getDb()
     .prepare(
       `UPDATE subscriptions SET
-        title = ?, criteria = ?, list_id = ?, notify_telegram = ?, generated_query = ?, query_version = ?,
+        title = ?, topic = ?, criteria = ?, list_id = ?, notify_telegram = ?, generated_query = ?, query_version = ?,
         paused = ?, poll_interval_ms = ?, updated_at = ?
        WHERE id = ?`,
     )
     .run(
       title,
+      topic ?? null,
       criteria,
       listId ?? null,
       notifyTelegram ? 1 : 0,
