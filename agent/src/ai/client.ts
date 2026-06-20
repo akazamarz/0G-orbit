@@ -127,7 +127,7 @@ interface BatchEvaluateResponse {
   results?: BatchEvaluateRow[];
 }
 
-const SCORE_THRESHOLD = 60;
+const SCORE_THRESHOLD = 70;
 
 function clampScore(value: unknown): number {
   const n = Number(value);

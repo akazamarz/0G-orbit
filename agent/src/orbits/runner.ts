@@ -11,10 +11,11 @@ import {
   getOrbit,
   markOrbitPolled,
   getUpgradedCriteria,
+  refreshOrbitQueryIfStale,
 } from "./repository.js";
 import type { Alert, Orbit, Tweet } from "@orbit/shared";
 
-const SCORE_THRESHOLD = 60;
+const SCORE_THRESHOLD = 70;
 
 function chunk<T>(items: T[], size: number): T[][] {
   const batches: T[][] = [];
@@ -36,7 +37,7 @@ async function fetchTweets(orbit: Orbit, globalIntervalMs: number): Promise<Twee
       logger.warn({ id: orbit.id }, "list orbit missing listId");
       return [];
     }
-    return listTimelineAllPages(orbit.listId, 1);
+    return listTimelineAllPages(orbit.listId, { orbitId: orbit.id });
   }
 
   if (!orbit.generatedQuery) {
@@ -46,14 +47,21 @@ async function fetchTweets(orbit: Orbit, globalIntervalMs: number): Promise<Twee
 
   const since = pollSinceTimestamp(orbit, globalIntervalMs);
   const pollQuery = buildPollSearchQuery(orbit.generatedQuery, since);
-  logger.debug({ id: orbit.id, pollQuery }, "x search poll query");
+  logger.info(
+    { orbitId: orbit.id, pollQuery, sinceMs: since.getTime() },
+    "x search poll starting",
+  );
 
-  return searchAllPages(pollQuery, 1);
+  return searchAllPages(pollQuery, { orbitId: orbit.id });
 }
 
 export async function runOrbit(orbitId: string): Promise<void> {
-  const fresh = getOrbit(orbitId);
+  let fresh = getOrbit(orbitId);
   if (!fresh || fresh.paused) return;
+
+  if (fresh.source === "custom") {
+    fresh = await refreshOrbitQueryIfStale(fresh);
+  }
 
   const config = loadConfig();
   const upgradedCriteria = getUpgradedCriteria(fresh);

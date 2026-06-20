@@ -8,7 +8,7 @@ import {
   upgradeOrbitIntent,
   fallbackUpgradedCriteria,
 } from "../ai/client.js";
-import { sanitizeSearchQuery, stripTimeBounds } from "../x/query.js";
+import { toEntityOrQuery, needsQueryRegeneration } from "../x/query.js";
 import { orbitColumnNames } from "../db/migrate.js";
 
 function rowToOrbit(row: Record<string, unknown>): Orbit {
@@ -52,8 +52,9 @@ async function resolveGeneratedQuery(
   upgradedCriteria: string,
 ): Promise<string> {
   if (source === "list") return "";
-  const { query } = await trackToQuery(upgradedCriteria);
-  return sanitizeSearchQuery(stripTimeBounds(query));
+  const result = await trackToQuery(upgradedCriteria);
+  const keywords = Array.isArray(result.keywords) ? result.keywords : [];
+  return toEntityOrQuery(keywords.length > 0 ? keywords : (result.query ?? ""));
 }
 
 function resolveListId(input: OrbitInput): string | undefined {
@@ -254,4 +255,28 @@ export function markOrbitPolled(id: string, polledAt: number): void {
 export function getUpgradedCriteria(orbit: Orbit): string {
   if (orbit.upgradedCriteria?.trim()) return orbit.upgradedCriteria.trim();
   return fallbackUpgradedCriteria(orbit.title, orbit.topic, orbit.criteria);
+}
+
+/** Regenerate stored search query when it uses the legacy flat-OR format. */
+export async function refreshOrbitQueryIfStale(orbit: Orbit): Promise<Orbit> {
+  if (orbit.source !== "custom" || !needsQueryRegeneration(orbit.generatedQuery)) {
+    return orbit;
+  }
+
+  const upgradedCriteria = getUpgradedCriteria(orbit);
+  const generatedQuery = await resolveGeneratedQuery("custom", upgradedCriteria);
+  if (!generatedQuery || generatedQuery === orbit.generatedQuery) return orbit;
+
+  const now = Date.now();
+  getDb()
+    .prepare(
+      `UPDATE orbits SET generated_query = ?, query_version = query_version + 1, updated_at = ? WHERE id = ?`,
+    )
+    .run(generatedQuery, now, orbit.id);
+
+  logger.info(
+    { id: orbit.id, oldQuery: orbit.generatedQuery, newQuery: generatedQuery },
+    "regenerated legacy flat-OR search query",
+  );
+  return getOrbit(orbit.id) ?? orbit;
 }

@@ -164,6 +164,8 @@ export interface AlertFeedResponse {
 }
 
 export interface IntentToQueryResult {
+  /** Distinctive entity/product tokens only — joined with OR (3–6 items). */
+  keywords: string[];
   query: string;
   operators: string[];
   explanation: string;

@@ -1,82 +1,73 @@
-/** Strip time bounds so each poll can append a fresh since: clause. */
-export function stripTimeBounds(query: string): string {
-  return query
-    .replace(/\bsince:\S+/gi, "")
-    .replace(/\buntil:\S+/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+const MAX_KEYWORDS = 12;
 
-const FORBIDDEN_OPERATOR =
+const BLOCKED_OPERATORS =
   /\b(?:from|to|list|lang|min_faves|min_retweets|min_replies|filter|has|url|place|point_radius|bio|is|retweets_of|in_reply_to|context|with|sample):[^\s)]+/gi;
 
-function collapseQueryWhitespace(query: string): string {
+export function stripTimeBounds(query: string): string {
   return query
-    .replace(/(?:\s+OR\s+)+/gi, " OR ")
+    .replace(/\b(?:since|until)(?:_time)?:\S+/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function expandQuotedPhrases(query: string): string {
-  return query.replace(/"([^"]+)"/g, (_, phrase: string) =>
-    phrase.split(/\s+/).filter(Boolean).join(" OR "),
-  );
+/** Max words per OR segment — allows "Fable 5" / "Meta AI" but not legacy AND blobs. */
+const MAX_WORDS_PER_SEGMENT = 2;
+
+function isLegacySegment(segment: string): boolean {
+  return segment.split(/\s+/).filter(Boolean).length > MAX_WORDS_PER_SEGMENT;
 }
 
-function toOrKeywords(query: string): string {
-  const parts = query.split(/\s+OR\s+/i);
-  const words: string[] = [];
-  for (const part of parts) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
-    if (/\s/.test(trimmed)) {
-      words.push(...trimmed.split(/\s+/).filter(Boolean));
-    } else {
-      words.push(trimmed);
-    }
-  }
+/** Split a stored OR query string into OR segments (not used for AI keyword arrays). */
+function parseOrQuery(query: string): string[] {
+  return query
+    .replace(BLOCKED_OPERATORS, "")
+    .replace(/(?:^|\s)@\w+/g, " ")
+    .replace(/(?:^|\s)#\w+/g, " ")
+    .replace(/[()"']/g, " ")
+    .split(/\s+OR\s+/i)
+    .map((t) => t.trim().replace(/^[^\w]+|[^\w]+$/g, ""))
+    .filter((t) => t.length >= 2 && !/^\d+$/.test(t));
+}
 
+function dedupeKeywords(tokens: string[]): string[] {
   const seen = new Set<string>();
-  const unique: string[] = [];
-  for (const word of words) {
+  const out: string[] = [];
+  for (const word of tokens) {
     const key = word.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    unique.push(word);
+    out.push(word);
+    if (out.length >= MAX_KEYWORDS) break;
   }
-  return unique.join(" OR ");
+  return out;
 }
 
-/** Keep only OR-separated single keywords — strip operators and quoted phrases. */
+/** Entity-only OR query, e.g. Fable OR Anthropic OR Claude. */
+export function toEntityOrQuery(input: string | string[]): string {
+  const tokens = Array.isArray(input)
+    ? input.map((k) => k.trim()).filter((k) => k.length >= 2)
+    : parseOrQuery(stripTimeBounds(input));
+  return dedupeKeywords(tokens).join(" OR ");
+}
+
 export function sanitizeSearchQuery(query: string): string {
-  let q = stripTimeBounds(query);
-
-  q = q.replace(FORBIDDEN_OPERATOR, "");
-  q = q.replace(/(?:^|\s)@\w+/g, " ");
-  q = q.replace(/(?:^|\s)#\w+/g, " ");
-  q = q.replace(/(?:^|\s)-\w+/g, " ");
-  q = q.replace(/[()]/g, " ");
-
-  q = expandQuotedPhrases(q);
-  q = collapseQueryWhitespace(q);
-  q = q.replace(/\bor\b/g, "OR");
-
-  return toOrKeywords(q);
+  return toEntityOrQuery(query);
 }
 
-/** Twitter advanced search since operator (UTC). */
 export function formatTwitterSince(date: Date): string {
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(date.getUTCDate()).padStart(2, "0");
-  const h = String(date.getUTCHours()).padStart(2, "0");
-  const min = String(date.getUTCMinutes()).padStart(2, "0");
-  const s = String(date.getUTCSeconds()).padStart(2, "0");
-  return `since:${y}-${m}-${d}_${h}:${min}:${s}_UTC`;
+  return `since_time:${Math.floor(date.getTime() / 1000)}`;
 }
 
 export function buildPollSearchQuery(baseQuery: string, since: Date): string {
   const core = sanitizeSearchQuery(baseQuery);
-  if (!core) return formatTwitterSince(since);
-  return `${core} ${formatTwitterSince(since)}`;
+  return core ? `${core} ${formatTwitterSince(since)}` : formatTwitterSince(since);
+}
+
+/** Regenerate when stored query is empty, has legacy AND-joined segments, or needs cleanup. */
+export function needsQueryRegeneration(query: string): boolean {
+  const core = stripTimeBounds(query).trim();
+  if (!core) return true;
+  const segments = core.split(/\s+OR\s+/i).map((s) => s.trim()).filter(Boolean);
+  if (segments.some(isLegacySegment)) return true;
+  return sanitizeSearchQuery(core) !== core;
 }
