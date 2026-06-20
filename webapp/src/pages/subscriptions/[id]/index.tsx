@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackPill } from "@/components/FeedbackPill";
+import { Loading } from "@/components/Loading";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
 import type { Subscription, Alert } from "@orbit/shared";
@@ -52,8 +53,8 @@ export default function SubscriptionDetail() {
 
   if (!sub) {
     return (
-      <AppShell title="Loading…">
-        <p className={styles.loading}>Loading…</p>
+      <AppShell title="Orbit">
+        <Loading />
       </AppShell>
     );
   }

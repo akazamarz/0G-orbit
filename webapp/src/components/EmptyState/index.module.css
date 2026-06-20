@@ -3,7 +3,7 @@
   padding: var(--space-6) var(--space-4);
   border: 1px dashed var(--border);
   border-radius: var(--radius);
-  background: var(--bg-elevated);
+  background: var(--bg);
 }
 
 .icon {

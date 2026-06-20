@@ -2,6 +2,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Loading } from "@/components/Loading";
+import { WalletRequiredState } from "@/components/WalletRequiredState";
 import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
 import { ORBIT_TEMPLATES } from "@/lib/templates";
@@ -55,9 +57,9 @@ export default function NewSubscription() {
       </Head>
       <AppShell title="Create orbit">
         {loading ? (
-          <p className={styles.muted}>Loading…</p>
+          <Loading />
         ) : !isAuthed ? (
-          <p className={styles.muted}>Connect your wallet from the header to get started.</p>
+          <WalletRequiredState />
         ) : (
           <>
             <p className={styles.templatesLabel}>Quick start</p>

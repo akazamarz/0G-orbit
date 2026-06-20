@@ -1,10 +1,11 @@
 import Head from "next/head";
-import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { AlertList } from "@/components/AlertList";
 import { EmptyState } from "@/components/EmptyState";
+import { Loading } from "@/components/Loading";
+import { WalletRequiredState } from "@/components/WalletRequiredState";
 import dynamic from "next/dynamic";
 import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
@@ -86,44 +87,32 @@ export default function Dashboard() {
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
 
-  const headerSubtitle =
+  const statsLine =
     isAuthed && !sessionLoading
       ? `${subs.length} orbit${subs.length !== 1 ? "s" : ""} · ${alerts.length} alert${alerts.length !== 1 ? "s" : ""}${
           pendingCount > 0
             ? ` · ${pendingCount} pending attestation${pendingCount !== 1 ? "s" : ""}`
             : ""
         }`
-      : undefined;
+      : null;
 
   return (
     <>
       <Head>
         <title>Dashboard - Orbit</title>
       </Head>
-      <AppShell
-        title="Dashboard"
-        subtitle={headerSubtitle}
-        actions={
-          isAuthed && !sessionLoading ? (
-            <Link href="/subscriptions" className={styles.createBtn}>
-              + New orbit
-            </Link>
-          ) : undefined
-        }
-      >
+      <AppShell title="Dashboard">
         {sessionLoading ? (
-          <div className={styles.loading}>Loading…</div>
+          <Loading />
         ) : !isAuthed ? (
-          <EmptyState
-            title="Connect your wallet"
-            description="Click Connect Wallet in the header — you'll be asked to sign once to verify ownership, then you're in."
-          />
+          <WalletRequiredState />
         ) : (
           <>
+            {statsLine ? <p className={styles.stats}>{statsLine}</p> : null}
             <section className={styles.section}>
               <h2 className={styles.heading}>Your orbits</h2>
               {dataLoading ? (
-                <div className={styles.loading}>Loading orbits…</div>
+                <Loading label="Loading orbits…" />
               ) : subs.length === 0 ? (
                 <EmptyState
                   title="No orbits yet"

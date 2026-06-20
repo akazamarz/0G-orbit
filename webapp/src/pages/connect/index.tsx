@@ -2,7 +2,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState } from "@/components/EmptyState";
+import { Loading } from "@/components/Loading";
+import { WalletRequiredState } from "@/components/WalletRequiredState";
 import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
@@ -38,29 +39,26 @@ export default function Connect() {
         <title>Connect Telegram - Orbit</title>
       </Head>
       <AppShell title="Connect Telegram">
-        <div className={styles.steps}>
-          <div className={`${styles.step} ${isAuthed ? styles.stepDone : styles.stepActive}`}>
-            <span className={styles.stepNum}>1</span>
-            <span>Wallet</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={`${styles.step} ${link ? styles.stepDone : isAuthed ? styles.stepActive : ""}`}>
-            <span className={styles.stepNum}>2</span>
-            <span>Telegram</span>
-          </div>
-        </div>
+        {loading ? (
+          <Loading />
+        ) : !isAuthed ? (
+          <WalletRequiredState />
+        ) : (
+          <>
+            <div className={styles.steps}>
+              <div className={`${styles.step} ${styles.stepDone}`}>
+                <span className={styles.stepNum}>1</span>
+                <span>Wallet</span>
+              </div>
+              <div className={styles.stepLine} />
+              <div className={`${styles.step} ${link ? styles.stepDone : styles.stepActive}`}>
+                <span className={styles.stepNum}>2</span>
+                <span>Telegram</span>
+              </div>
+            </div>
 
-        <div className={styles.card}>
-          <h2 className={styles.title}>Generate link</h2>
-          {loading ? (
-            <p className={styles.muted}>Loading…</p>
-          ) : !isAuthed ? (
-            <EmptyState
-              title="Connect your wallet"
-              description="Connect your wallet from the header — signing in happens automatically — then return here to link Telegram."
-            />
-          ) : (
-            <>
+            <div className={styles.card}>
+              <h2 className={styles.title}>Generate link</h2>
               <p className={styles.desc}>
                 Link your Telegram account to receive live alerts and daily digests from your orbits.
               </p>
@@ -78,9 +76,9 @@ export default function Connect() {
               <Link href="/subscriptions" className={styles.secondary}>
                 Create an orbit →
               </Link>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </AppShell>
     </>
   );

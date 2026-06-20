@@ -4,8 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { zgGalileo } from "@/lib/chains";
 import { ToastProvider } from "@/components/Toast";
+import { Loading } from "@/components/Loading";
 import { SessionProvider } from "@/contexts/SessionContext";
-import styles from "./index.module.css";
 
 function createWagmiConfig() {
   return getDefaultConfig({
@@ -26,7 +26,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!mounted) {
-    return <div className={styles.loading}>Loading wallet…</div>;
+    return <Loading label="Loading wallet…" variant="full" />;
   }
 
   return (
