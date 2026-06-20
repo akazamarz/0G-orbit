@@ -47,13 +47,6 @@
   line-height: 1;
 }
 
-.logo {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
 .nav {
   display: flex;
   flex-direction: column;
@@ -169,11 +162,6 @@
 
   .brand {
     padding: 0;
-  }
-
-  .logo {
-    width: 32px;
-    height: 32px;
   }
 
   .brandName {

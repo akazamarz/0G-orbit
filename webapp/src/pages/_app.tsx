@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
 import { Michroma } from "next/font/google";
 import { Web3Provider } from "@/components/Web3Provider";

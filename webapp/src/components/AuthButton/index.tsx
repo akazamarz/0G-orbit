@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect, useSignMessage } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { ZG_CHAIN } from "@orbit/shared";
 import { useSession } from "@/hooks/useSession";
 import { signInWithWallet } from "@/lib/siwe-client";
@@ -13,7 +13,6 @@ interface Props {
 
 export function AuthButton({ onAuthed }: Props) {
   const { address, isConnected, chain } = useAccount();
-  const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
@@ -65,12 +64,6 @@ export function AuthButton({ onAuthed }: Props) {
     wasConnected.current = isConnected;
   }, [isConnected, signOut]);
 
-  async function handleSignOut() {
-    await signOut();
-    disconnect();
-    toast("Signed out", "info");
-  }
-
   return (
     <div className={styles.wrap}>
       {wrongChain && (
@@ -80,12 +73,6 @@ export function AuthButton({ onAuthed }: Props) {
       {signInDeclined && needsSignIn && (
         <button type="button" className={styles.retry} onClick={() => void handleSignIn()}>
           Retry sign-in
-        </button>
-      )}
-
-      {sessionMatches && (
-        <button type="button" className={styles.signOut} onClick={() => void handleSignOut()}>
-          Sign out
         </button>
       )}
 

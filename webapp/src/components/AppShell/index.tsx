@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
+import { OrbitLogo } from "@/components/OrbitLogo";
 import styles from "./index.module.css";
 
 const AuthButton = dynamic(
@@ -31,7 +31,7 @@ export function AppShell({ title, subtitle, actions, children }: Props) {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarBrand}>
           <Link href="/dashboard" className={styles.brand}>
-            <Image src="/images/orbit-logo.png" alt="" width={40} height={40} className={styles.logo} />
+            <OrbitLogo size="md" />
             <span className={styles.brandName}>Orbit</span>
           </Link>
         </div>

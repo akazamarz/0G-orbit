@@ -37,10 +37,6 @@
   letter-spacing: 0.05em;
 }
 
-.logo {
-  border-radius: 8px;
-}
-
 .topCta {
   background: transparent;
   color: var(--fg);
@@ -194,11 +190,6 @@
 
   .brand {
     font-size: 1.1rem;
-  }
-
-  .logo {
-    width: 36px;
-    height: 36px;
   }
 
   .hero {

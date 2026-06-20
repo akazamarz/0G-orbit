@@ -44,8 +44,29 @@ body {
 
 * {
   box-sizing: border-box;
-  padding: 0;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+ul,
+ol,
+menu {
   margin: 0;
+  padding: 0;
 }
 
 a {

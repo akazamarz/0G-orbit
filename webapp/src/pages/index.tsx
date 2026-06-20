@@ -1,6 +1,6 @@
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
+import { OrbitLogo } from "@/components/OrbitLogo";
 import styles from "./index.module.css";
 
 const STEPS = [
@@ -22,7 +22,7 @@ export default function Home() {
         <div className={styles.bg} aria-hidden />
         <header className={styles.topBar}>
           <div className={styles.brand}>
-            <Image src="/images/orbit-logo.png" alt="" width={44} height={44} className={styles.logo} />
+            <OrbitLogo size="lg" />
             <span>Orbit</span>
           </div>
           <Link href="/dashboard" className={styles.topCta}>
