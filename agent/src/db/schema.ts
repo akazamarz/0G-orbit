@@ -6,11 +6,13 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   title TEXT NOT NULL,
   topic TEXT,
   criteria TEXT NOT NULL,
+  upgraded_criteria TEXT,
   list_id TEXT,
   notify_telegram INTEGER NOT NULL DEFAULT 0,
   generated_query TEXT NOT NULL DEFAULT '',
   query_version INTEGER NOT NULL DEFAULT 1,
   poll_interval_ms INTEGER NOT NULL,
+  last_polled_at INTEGER,
   paused INTEGER NOT NULL DEFAULT 0,
   storage_root TEXT,
   telegram_chat_id INTEGER,
@@ -80,7 +82,8 @@ CREATE TABLE IF NOT EXISTS pending_attestations (
   attested_at INTEGER
 );
 
-CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
+  CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
+  CREATE INDEX IF NOT EXISTS idx_subscriptions_active_poll ON subscriptions(paused, last_polled_at);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_subscription ON alerts(subscription_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);

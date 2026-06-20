@@ -1,62 +1,55 @@
-import { getActiveSubscriptions, getSubscription } from "./repository.js";
+import { loadConfig } from "@orbit/shared";
+import { getActiveSubscriptions } from "./repository.js";
 import { runSubscription } from "./runner.js";
 import { logger } from "../utils/logger.js";
 
-const timers = new Map<string, NodeJS.Timeout>();
+let cycleTimer: NodeJS.Timeout | null = null;
+let cycleRunning = false;
+
+async function runGlobalPollCycle(): Promise<void> {
+  if (cycleRunning) {
+    logger.warn("global poll cycle skipped — previous cycle still running");
+    return;
+  }
+
+  cycleRunning = true;
+  const subs = getActiveSubscriptions();
+  logger.info({ count: subs.length }, "global poll cycle started");
+
+  try {
+    for (const sub of subs) {
+      try {
+        await runSubscription(sub.id);
+      } catch (err) {
+        logger.error({ err, subId: sub.id }, "orbit poll failed");
+      }
+    }
+  } finally {
+    cycleRunning = false;
+    logger.info("global poll cycle finished");
+  }
+}
 
 export function startScheduler(): void {
-  refresh();
-  const tickMs = 60000;
-  setInterval(refresh, tickMs);
-  logger.info("scheduler started");
+  const config = loadConfig();
+  const intervalMs = config.GLOBAL_POLL_INTERVAL_MS;
+
+  void runGlobalPollCycle();
+  cycleTimer = setInterval(() => void runGlobalPollCycle(), intervalMs);
+  logger.info({ intervalMs }, "global poll scheduler started");
 }
 
-function refresh(): void {
-  const active = getActiveSubscriptions();
-  for (const sub of active) {
-    if (!timers.has(sub.id)) schedule(sub.id);
-  }
-  for (const id of timers.keys()) {
-    if (!active.find((s) => s.id === id)) cancel(id);
-  }
+export function pauseSubscription(_id: string): void {
+  // Paused orbits are excluded from getActiveSubscriptions().
 }
 
-function schedule(subscriptionId: string): void {
-  const fire = async () => {
-    const sub = getSubscription(subscriptionId);
-    if (!sub || sub.paused) return;
-    try {
-      await runSubscription(sub);
-    } catch (err) {
-      logger.error({ err, subId: subscriptionId }, "subscription run failed");
-    }
-  };
-  const sub = getSubscription(subscriptionId);
-  const intervalMs = sub?.pollIntervalMs ?? 300000;
-  const timer = setInterval(fire, intervalMs);
-  timers.set(subscriptionId, timer);
-  fire();
-  logger.info({ id: subscriptionId, intervalMs }, "subscription scheduled");
-}
-
-function cancel(id: string): void {
-  const t = timers.get(id);
-  if (t) {
-    clearInterval(t);
-    timers.delete(id);
-    logger.info({ id }, "subscription unscheduled");
-  }
-}
-
-export function pauseSubscription(id: string): void {
-  cancel(id);
-}
-
-export function resumeSubscription(id: string): void {
-  const sub = getSubscription(id);
-  if (sub && !sub.paused) schedule(id);
+export function resumeSubscription(_id: string): void {
+  // Resumed orbits are picked up on the next global cycle.
 }
 
 export function stopScheduler(): void {
-  for (const id of timers.keys()) cancel(id);
+  if (cycleTimer) {
+    clearInterval(cycleTimer);
+    cycleTimer = null;
+  }
 }

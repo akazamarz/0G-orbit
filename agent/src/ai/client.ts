@@ -1,9 +1,17 @@
 import OpenAI from "openai";
-import { loadConfig, type BriefResult, type IntentToQueryResult, type ScoreResult } from "@orbit/shared";
+import {
+  loadConfig,
+  type IntentToQueryResult,
+  type TrackSource,
+} from "@orbit/shared";
 import { logger } from "../utils/logger.js";
 import { ExternalApiError } from "../utils/errors.js";
 import { retry } from "../utils/retry.js";
-import { INTENT_TO_QUERY_PROMPT, SCORE_PROMPT, BRIEF_PROMPT } from "./prompts.js";
+import {
+  UPGRADE_INTENT_PROMPT,
+  INTENT_TO_QUERY_PROMPT,
+  BATCH_EVALUATE_PROMPT,
+} from "./prompts.js";
 
 let client: OpenAI | null = null;
 
@@ -43,28 +51,165 @@ function parseJson<T>(raw: string): T {
   return JSON.parse(cleaned) as T;
 }
 
-function trackPrompt(title: string, criteria: string): string {
-  return `Title: ${title}\nCriteria: ${criteria}`;
+function orbitConfigPrompt(
+  name: string,
+  topic: string | undefined,
+  criteria: string,
+  source: TrackSource,
+): string {
+  const lines = [
+    `Orbit name: ${name}`,
+    `Source: ${source === "list" ? "X list timeline" : "custom X search"}`,
+    `Topic: ${topic?.trim() || "(none)"}`,
+    `Criteria: ${criteria}`,
+  ];
+  return lines.join("\n");
 }
 
-export async function trackToQuery(title: string, criteria: string): Promise<IntentToQueryResult> {
-  const config = loadConfig();
-  const raw = await chat(config.AI_MODEL_CHAT, INTENT_TO_QUERY_PROMPT, trackPrompt(title, criteria));
-  return parseJson<IntentToQueryResult>(raw);
+/** Fallback when AI upgrade is unavailable. */
+export function fallbackUpgradedCriteria(
+  name: string,
+  topic: string | undefined,
+  criteria: string,
+): string {
+  const topicLine = topic?.trim() ? ` Topic: ${topic.trim()}.` : "";
+  return `Orbit: ${name.trim()}.${topicLine} ${criteria.trim()}`.trim();
 }
 
-export async function scoreTweet(title: string, criteria: string, tweetText: string): Promise<ScoreResult> {
+export async function upgradeOrbitIntent(
+  name: string,
+  topic: string | undefined,
+  criteria: string,
+  source: TrackSource,
+): Promise<string> {
   const config = loadConfig();
   const raw = await chat(
     config.AI_MODEL_CHAT,
-    SCORE_PROMPT,
-    `${trackPrompt(title, criteria)}\nTweet: ${tweetText}`,
+    UPGRADE_INTENT_PROMPT,
+    orbitConfigPrompt(name, topic, criteria, source),
   );
-  return parseJson<ScoreResult>(raw);
+  const text = raw.trim();
+  if (!text) throw new ExternalApiError("empty upgraded criteria");
+  return text;
 }
 
-export async function briefAlert(tweetText: string): Promise<BriefResult> {
+export async function trackToQuery(upgradedCriteria: string): Promise<IntentToQueryResult> {
   const config = loadConfig();
-  const summary = await chat(config.AI_MODEL_CHAT, BRIEF_PROMPT, tweetText);
-  return { summary: summary.trim() };
+  const raw = await chat(config.AI_MODEL_CHAT, INTENT_TO_QUERY_PROMPT, upgradedCriteria);
+  return parseJson<IntentToQueryResult>(raw);
+}
+
+export interface BatchTweetInput {
+  index: number;
+  id: string;
+  text: string;
+}
+
+export interface BatchTweetEvaluation {
+  index: number;
+  id: string;
+  score: number;
+  relevant: boolean;
+  summary?: string;
+  reason: string;
+}
+
+interface BatchEvaluateRow {
+  index?: number;
+  id?: string;
+  score?: number;
+  relevant?: boolean;
+  summary?: string;
+  reason?: string;
+}
+
+interface BatchEvaluateResponse {
+  results?: BatchEvaluateRow[];
+}
+
+const SCORE_THRESHOLD = 60;
+
+function clampScore(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function batchUserPrompt(upgradedCriteria: string, tweets: BatchTweetInput[]): string {
+  return [
+    `Tracking brief:\n${upgradedCriteria}`,
+    "",
+    `Evaluate exactly ${tweets.length} tweet(s).`,
+    "Tweets:",
+    JSON.stringify(tweets, null, 2),
+  ].join("\n");
+}
+
+function rowToEvaluation(row: BatchEvaluateRow, fallbackIndex: number, fallbackId: string): BatchTweetEvaluation {
+  const score = clampScore(row.score);
+  const relevant = typeof row.relevant === "boolean" ? row.relevant : score >= SCORE_THRESHOLD;
+  const summary = row.summary?.trim() || undefined;
+  return {
+    index: typeof row.index === "number" ? row.index : fallbackIndex,
+    id: typeof row.id === "string" && row.id.length > 0 ? row.id : fallbackId,
+    score,
+    relevant: relevant && score >= SCORE_THRESHOLD,
+    summary: relevant && score >= SCORE_THRESHOLD ? summary : undefined,
+    reason: row.reason?.trim() || "",
+  };
+}
+
+function normalizeBatchResults(
+  tweets: BatchTweetInput[],
+  raw: unknown,
+): BatchTweetEvaluation[] {
+  const parsed = raw as BatchEvaluateResponse;
+  const rows = Array.isArray(parsed?.results) ? parsed.results : [];
+
+  const byIndex = new Map<number, BatchTweetEvaluation>();
+  const byId = new Map<string, BatchTweetEvaluation>();
+
+  for (const row of rows) {
+    const fallbackIndex = typeof row.index === "number" ? row.index : -1;
+    const fallbackId = row.id ?? "";
+    const evaluation = rowToEvaluation(row, fallbackIndex, fallbackId);
+    if (evaluation.index >= 0) byIndex.set(evaluation.index, evaluation);
+    if (evaluation.id) byId.set(evaluation.id, evaluation);
+  }
+
+  return tweets.map((tweet) => {
+    const hit = byIndex.get(tweet.index) ?? byId.get(tweet.id);
+    if (hit) {
+      return { ...hit, index: tweet.index, id: tweet.id };
+    }
+    return {
+      index: tweet.index,
+      id: tweet.id,
+      score: 0,
+      relevant: false,
+      reason: "missing from batch response",
+    };
+  });
+}
+
+/** Score and summarize up to AI_BATCH_SIZE tweets in one request. */
+export async function evaluateTweetBatch(
+  upgradedCriteria: string,
+  tweets: BatchTweetInput[],
+): Promise<BatchTweetEvaluation[]> {
+  if (tweets.length === 0) return [];
+  const config = loadConfig();
+  const raw = await chat(
+    config.AI_MODEL_CHAT,
+    BATCH_EVALUATE_PROMPT,
+    batchUserPrompt(upgradedCriteria, tweets),
+  );
+  let parsed: unknown;
+  try {
+    parsed = parseJson<BatchEvaluateResponse>(raw);
+  } catch (err) {
+    logger.warn({ err, raw: raw.slice(0, 500) }, "batch evaluate json parse failed");
+    throw new ExternalApiError("invalid batch evaluate json");
+  }
+  return normalizeBatchResults(tweets, parsed);
 }

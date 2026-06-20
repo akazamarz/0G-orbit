@@ -27,7 +27,10 @@ const envSchema = z.object({
   ATTESTATION_SIGN_DEADLINE_MS: z.coerce.number().int().positive().default(604800000),
 
   X_API_KEY: z.string().min(1),
-  X_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(300000),
+  /** Global interval between full poll cycles (all orbits, sequential). */
+  GLOBAL_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(600000),
+  /** Posts per AI evaluation request (batch scoring + summaries). */
+  AI_BATCH_SIZE: z.coerce.number().int().positive().default(5),
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_BOT_USERNAME: z.string().min(1),

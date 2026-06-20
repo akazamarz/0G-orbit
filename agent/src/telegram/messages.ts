@@ -27,17 +27,6 @@ export function formatWallet(wallet: string): string {
   return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
 }
 
-function formatAuthor(author: string): string {
-  return author.startsWith("@") ? author : `@${author}`;
-}
-
-function scoreLabel(score: number): string {
-  const rounded = Math.round(score);
-  if (rounded >= 85) return `${rounded}/100 · Strong match`;
-  if (rounded >= 70) return `${rounded}/100 · Likely match`;
-  return `${rounded}/100`;
-}
-
 export function welcomeMessage(): string {
   return [
     "<b>Welcome to Orbit</b>",
@@ -223,17 +212,13 @@ export function helpMessage(): string {
 export function formatAlertMessage(alert: Alert, orbitTitle?: string): string {
   const title = escapeHtml(orbitTitle?.trim() || "Untitled orbit");
   const summary = escapeHtml(alert.summary);
-  const author = escapeHtml(formatAuthor(alert.tweet.author));
   const url = escapeHtml(alert.tweet.url);
 
   return [
-    "🛰 <b>New orbit signal</b>",
-    "",
-    `<b>Orbit:</b> ${title}`,
-    `<b>Match:</b> ${scoreLabel(alert.score)}`,
+    `🛰 <b>${title}</b>`,
     "",
     summary,
     "",
-    `${author} · <a href="${url}">View on X</a>`,
+    `<a href="${url}">View on X</a>`,
   ].join("\n");
 }

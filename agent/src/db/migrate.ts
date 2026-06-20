@@ -53,6 +53,28 @@ export function migrateSubscriptionTopic(db: Database.Database): void {
   }
 }
 
+/** Add upgraded_criteria and last_polled_at for poll pipeline. */
+export function migrateSubscriptionPolling(db: Database.Database): void {
+  const cols = columnNames(db);
+  if (cols.size === 0) return;
+  if (!cols.has("upgraded_criteria")) {
+    db.exec(`ALTER TABLE subscriptions ADD COLUMN upgraded_criteria TEXT`);
+    db.exec(`
+      UPDATE subscriptions
+      SET upgraded_criteria = CASE
+        WHEN criteria IS NOT NULL AND criteria != '' THEN
+          'Orbit: ' || title || CASE WHEN topic IS NOT NULL AND topic != '' THEN '. Topic: ' || topic ELSE '' END || '. ' || criteria
+        ELSE title
+      END
+      WHERE upgraded_criteria IS NULL OR upgraded_criteria = ''
+    `);
+  }
+  if (!cols.has("last_polled_at")) {
+    db.exec(`ALTER TABLE subscriptions ADD COLUMN last_polled_at INTEGER`);
+  }
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_subscriptions_active_poll ON subscriptions(paused, last_polled_at)`);
+}
+
 /** Create wallet_telegram and backfill from legacy subscriptions.telegram_chat_id. */
 export function migrateWalletTelegram(db: Database.Database): void {
   db.exec(`

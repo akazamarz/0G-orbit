@@ -12,10 +12,13 @@ export interface Subscription {
   topic?: string;
   criteria: string;
   listId?: string;
+  /** AI-synthesized brief from title + topic + criteria. */
+  upgradedCriteria?: string;
   notifyTelegram: boolean;
   generatedQuery: string;
   queryVersion: number;
   pollIntervalMs: number;
+  lastPolledAt?: number;
   paused: boolean;
   storageRoot?: string;
   createdAt: number;
