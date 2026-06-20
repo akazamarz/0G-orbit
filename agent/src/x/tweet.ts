@@ -1,32 +1,42 @@
 import type { Tweet, TweetEmbed, TweetFeedType } from "@orbit/shared";
 import { markSeen } from "./dedup.js";
 
-function mapAuthor(raw: Record<string, unknown> | undefined): string {
+function mapAuthorHandle(raw: Record<string, unknown> | undefined): string {
   if (!raw) return "";
-  return String(raw.userName ?? raw.username ?? "");
+  return String(raw.userName ?? raw.username ?? "").replace(/^@/, "");
+}
+
+function mapAuthorName(raw: Record<string, unknown> | undefined, handle: string): string {
+  if (!raw) return handle;
+  const name = String(raw.name ?? raw.displayName ?? raw.display_name ?? "").trim();
+  return name || handle;
 }
 
 function mapEmbed(raw: Record<string, unknown> | undefined): TweetEmbed | undefined {
   if (!raw) return undefined;
   const id = String(raw.id ?? "");
   if (!id) return undefined;
-  const author = (raw.author as Record<string, unknown> | undefined) ?? {};
+  const authorObj = (raw.author as Record<string, unknown> | undefined) ?? {};
+  const handle = mapAuthorHandle(authorObj);
   return {
     id,
     text: String(raw.text ?? raw.content ?? ""),
-    author: mapAuthor(author),
+    author: handle,
+    authorName: mapAuthorName(authorObj, handle) || undefined,
     url: String(raw.url ?? `https://x.com/i/status/${id}`),
     createdAt: raw.createdAt != null ? String(raw.createdAt) : undefined,
   };
 }
 
 export function mapTweet(raw: Record<string, unknown>): Tweet {
-  const author = (raw.author as Record<string, unknown> | undefined) ?? {};
+  const authorObj = (raw.author as Record<string, unknown> | undefined) ?? {};
+  const handle = mapAuthorHandle(authorObj);
   const id = String(raw.id ?? raw.tweet_id ?? "");
   const tweet: Tweet = {
     id,
     text: String(raw.text ?? raw.content ?? ""),
-    author: mapAuthor(author),
+    author: handle,
+    authorName: mapAuthorName(authorObj, handle) || undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
     favoriteCount: Number(raw.likeCount ?? raw.favoriteCount ?? raw.favorite_count ?? 0),
     retweetCount: Number(raw.retweetCount ?? raw.retweet_count ?? 0),

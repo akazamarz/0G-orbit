@@ -240,7 +240,10 @@ export function formatAlertMessage(alert: Alert, orbitTitle?: string): string {
   const summary = escapeHtml(alert.summary);
   const url = escapeHtml(alert.tweet.url);
   const handle = alert.tweet.author.replace(/^@/, "").trim();
-  const authorLine = handle ? `@${escapeHtml(handle)}` : null;
+  const displayName = escapeHtml(alert.tweet.authorName?.trim() || handle);
+  const profileUrl = handle ? escapeHtml(`https://x.com/${handle}`) : null;
+  const authorLine =
+    handle && profileUrl ? `<a href="${profileUrl}">${displayName}</a>` : null;
 
   const lines = [`🔔 <b>${title}</b>`, ""];
   if (authorLine) lines.push(authorLine, "");

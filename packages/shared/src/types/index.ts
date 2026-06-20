@@ -53,6 +53,7 @@ export interface TweetEmbed {
   id: string;
   text: string;
   author: string;
+  authorName?: string;
   url: string;
   createdAt?: string;
 }
@@ -60,7 +61,10 @@ export interface TweetEmbed {
 export interface Tweet {
   id: string;
   text: string;
+  /** X handle without @ */
   author: string;
+  /** Display name from X profile */
+  authorName?: string;
   createdAt: string;
   favoriteCount: number;
   retweetCount: number;
