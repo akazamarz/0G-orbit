@@ -50,6 +50,20 @@
   letter-spacing: 0.05em;
 }
 
+.criteria {
+  color: var(--fg-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-3);
+  max-width: 640px;
+}
+
+.listMeta {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  margin-bottom: var(--space-4);
+}
+
 .query {
   display: block;
   margin-top: var(--space-2);

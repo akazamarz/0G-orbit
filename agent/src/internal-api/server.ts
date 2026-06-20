@@ -41,7 +41,7 @@ app.patch("/internal/subscriptions/:id", secretMiddleware, async (c) => {
   const id = c.req.param("id");
   if (!id) return c.json({ error: "invalid id" }, 400);
   const body = (await c.req.json()) as SubscriptionUpdate;
-  const sub = handleUpdateSubscription(id, body);
+  const sub = await handleUpdateSubscription(id, body);
   if (!sub) return c.json({ error: "not found" }, 404);
   return c.json(sub);
 });

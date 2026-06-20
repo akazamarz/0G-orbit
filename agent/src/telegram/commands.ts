@@ -14,10 +14,10 @@ export function registerCommands(bot: Bot): void {
     const wallet = getWalletByChatId(ctx.chat.id);
     if (!wallet) return ctx.reply("Link your wallet from the dashboard first.");
     const rows = getDb()
-      .prepare("SELECT id, intent, paused FROM subscriptions WHERE wallet = ?")
-      .all(wallet) as { id: string; intent: string; paused: number }[];
-    if (rows.length === 0) return ctx.reply("No active orbits.");
-    const lines = rows.map((r) => `${r.paused ? "⏸" : "🛰"} ${r.intent.slice(0, 50)} (id: ${r.id.slice(0, 8)})`);
+      .prepare("SELECT id, title, paused FROM subscriptions WHERE wallet = ?")
+      .all(wallet) as { id: string; title: string; paused: number }[];
+    if (rows.length === 0) return ctx.reply("No active tracks.");
+    const lines = rows.map((r) => `${r.paused ? "⏸" : "🛰"} ${r.title.slice(0, 50)} (id: ${r.id.slice(0, 8)})`);
     await ctx.reply(lines.join("\n"));
   });
 

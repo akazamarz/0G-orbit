@@ -3,18 +3,33 @@ import { ethers } from "ethers";
 import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
-import { filterUnseen, markSeen, searchAllPages } from "../x/index.js";
+import { filterUnseen, markSeen, searchAllPages, listTimelineAllPages } from "../x/index.js";
 import { scoreTweet, briefAlert, digestBriefing } from "../ai/client.js";
 import { uploadDigest, createPendingAttestation, isAttestationEnabled } from "../0g/index.js";
 import { sendAlert, sendDigest } from "../telegram/notify.js";
-import type { Alert, AlertDigest, Subscription } from "@orbit/shared";
+import type { Alert, AlertDigest, Subscription, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
 
-export async function runSubscription(sub: Subscription): Promise<void> {
-  logger.info({ id: sub.id, query: sub.generatedQuery }, "polling subscription");
+async function fetchTweets(sub: Subscription): Promise<Tweet[]> {
+  if (sub.source === "list") {
+    if (!sub.listId) {
+      logger.warn({ id: sub.id }, "list track missing listId");
+      return [];
+    }
+    return listTimelineAllPages(sub.listId);
+  }
+  if (!sub.generatedQuery) {
+    logger.warn({ id: sub.id }, "custom track missing generated query");
+    return [];
+  }
+  return searchAllPages(sub.generatedQuery);
+}
 
-  const tweets = await searchAllPages(sub.generatedQuery);
+export async function runSubscription(sub: Subscription): Promise<void> {
+  logger.info({ id: sub.id, source: sub.source, query: sub.generatedQuery, listId: sub.listId }, "polling subscription");
+
+  const tweets = await fetchTweets(sub);
   const unseen = filterUnseen(sub.id, tweets);
   if (unseen.length === 0) {
     logger.debug({ id: sub.id }, "no new tweets");
@@ -23,7 +38,7 @@ export async function runSubscription(sub: Subscription): Promise<void> {
 
   for (const tweet of unseen) {
     markSeen(sub.id, tweet.id);
-    const { score, reason } = await scoreTweet(sub.intent, tweet.text);
+    const { score, reason } = await scoreTweet(sub.title, sub.criteria, tweet.text);
     if (score < SCORE_THRESHOLD) continue;
 
     const { summary } = await briefAlert(tweet.text);
@@ -40,16 +55,12 @@ export async function runSubscription(sub: Subscription): Promise<void> {
 
     persistAlert(alert);
 
-    if (sub.mode === "live" && sub.telegramChatId) {
+    if (sub.notifyTelegram && sub.telegramChatId) {
       await sendAlert(sub.telegramChatId, alert);
       markAlertSent(alert.id);
     }
 
     logger.info({ alertId: alert.id, score, reason }, "alert created");
-  }
-
-  if (sub.mode === "digest") {
-    await runDigest(sub);
   }
 }
 
@@ -83,7 +94,7 @@ export async function runDigest(sub: Subscription): Promise<void> {
     logger.info({ subId: sub.id, count: alerts.length }, "digest stored");
   }
 
-  if (sub.telegramChatId) {
+  if (sub.notifyTelegram && sub.telegramChatId) {
     await sendDigest(sub.telegramChatId, briefing, alerts);
   }
 }

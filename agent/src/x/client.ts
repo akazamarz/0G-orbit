@@ -52,11 +52,50 @@ export async function advancedSearch(query: string, cursor?: string): Promise<Se
   );
 }
 
+export async function listTimeline(listId: string, cursor?: string): Promise<SearchResult> {
+  const config = loadConfig();
+  const url = new URL(X_API.listTimeline);
+  url.searchParams.set("listId", listId);
+  if (cursor) url.searchParams.set("cursor", cursor);
+
+  return retry(
+    async () => {
+      const res = await fetch(url, {
+        headers: { "X-API-Key": config.X_API_KEY },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) {
+        throw new ExternalApiError(`x list api ${res.status}: ${await res.text()}`);
+      }
+      const body = (await res.json()) as Record<string, unknown>;
+      const rawTweets = (body.tweets as Record<string, unknown>[]) ?? [];
+      return {
+        tweets: rawTweets.map(mapTweet),
+        hasNextPage: Boolean(body.has_next_page),
+        nextCursor: String(body.next_cursor ?? ""),
+      };
+    },
+    { label: "x-list" },
+  );
+}
+
 export async function searchAllPages(query: string, maxPages = 3): Promise<Tweet[]> {
   const all: Tweet[] = [];
   let cursor: string | undefined;
   for (let i = 0; i < maxPages; i++) {
     const res = await advancedSearch(query, cursor);
+    all.push(...res.tweets);
+    if (!res.hasNextPage || !res.nextCursor) break;
+    cursor = res.nextCursor;
+  }
+  return all;
+}
+
+export async function listTimelineAllPages(listId: string, maxPages = 2): Promise<Tweet[]> {
+  const all: Tweet[] = [];
+  let cursor: string | undefined;
+  for (let i = 0; i < maxPages; i++) {
+    const res = await listTimeline(listId, cursor);
     all.push(...res.tweets);
     if (!res.hasNextPage || !res.nextCursor) break;
     cursor = res.nextCursor;

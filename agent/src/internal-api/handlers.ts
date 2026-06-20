@@ -1,11 +1,25 @@
 import { timingSafeEqual } from "node:crypto";
 import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
-import type { Alert, Feedback, Subscription, AttestationData, PendingAttestationsResponse, SignAttestationRequest } from "@orbit/shared";
-import { createSubscription, deleteSubscription, getSubscription, listSubscriptions, updateSubscription } from "../orbits/repository.js";
+import type {
+  Alert,
+  Feedback,
+  Subscription,
+  SubscriptionInput,
+  SubscriptionUpdate,
+  AttestationData,
+  PendingAttestationsResponse,
+  SignAttestationRequest,
+} from "@orbit/shared";
+import {
+  createSubscription,
+  deleteSubscription,
+  listSubscriptions,
+  setTelegramChat,
+  updateSubscription,
+} from "../orbits/repository.js";
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
 import { createLinkNonce, bindNonceToChat } from "../telegram/notify.js";
-import { setTelegramChat } from "../orbits/repository.js";
 import { listPendingAttestations, attestWithSignature, getEIP712Domain, isAttestationEnabled } from "../0g/index.js";
 
 export function listAlerts(wallet: string, since = 0, limit = 50): Alert[] {
@@ -34,21 +48,15 @@ export function recordFeedback(wallet: string, alertId: string, rating: "up" | "
   return { id, alertId, wallet, rating, createdAt: Date.now() };
 }
 
-export function handleCreateSubscription(input: {
-  wallet: string;
-  intent: string;
-  watchType: "accounts" | "lists" | "topics";
-  mode: "live" | "digest";
-  storageRoot?: string;
-}): Promise<Subscription> {
+export function handleCreateSubscription(input: SubscriptionInput): Promise<Subscription> {
   return createSubscription(input);
 }
 
-export function handleUpdateSubscription(
+export async function handleUpdateSubscription(
   id: string,
-  update: { intent?: string; watchType?: Subscription["watchType"]; mode?: Subscription["mode"]; paused?: boolean },
-): Subscription | null {
-  const updated = updateSubscription(id, update);
+  update: SubscriptionUpdate,
+): Promise<Subscription | null> {
+  const updated = await updateSubscription(id, update);
   if (updated && update.paused === true) pauseSubscription(id);
   if (updated && update.paused === false) resumeSubscription(id);
   return updated;

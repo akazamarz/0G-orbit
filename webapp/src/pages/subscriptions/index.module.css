@@ -82,7 +82,8 @@
 }
 
 .textarea,
-.select {
+.select,
+.input {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--fg);
@@ -92,10 +93,12 @@
   font-size: 0.95rem;
   transition: border-color 0.15s ease;
   outline: none;
+  width: 100%;
 }
 
 .textarea:focus,
-.select:focus {
+.select:focus,
+.input:focus {
   border-color: var(--accent);
 }
 
@@ -113,26 +116,92 @@
   flex: 1;
 }
 
+.sourceRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.source,
+.sourceActive {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-align: left;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.source:hover {
+  border-color: var(--fg-muted);
+}
+
+.sourceActive {
+  border-color: var(--accent);
+}
+
+.sourceTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.sourceHint {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.toggle input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+}
+
+.toggleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggleTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.toggleHint {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
 .submit {
-  background: var(--accent);
-  color: #fff;
-  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
   padding: var(--space-3);
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.95rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  border-color: var(--fg-muted);
 }
 
 .submit:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: wait;
 }
 
@@ -214,6 +283,10 @@
 
   .row {
     flex-direction: column;
+  }
+
+  .sourceRow {
+    grid-template-columns: 1fr;
   }
 
   .success {

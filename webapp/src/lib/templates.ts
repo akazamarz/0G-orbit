@@ -1,29 +1,33 @@
-import type { WatchType } from "@orbit/shared";
+import type { TrackSource } from "@orbit/shared";
 
 export interface OrbitTemplate {
   id: string;
   label: string;
-  watchType: WatchType;
-  intent: string;
+  source: TrackSource;
+  title: string;
+  criteria: string;
 }
 
 export const ORBIT_TEMPLATES: OrbitTemplate[] = [
   {
-    id: "track-vc",
-    label: "Track a VC",
-    watchType: "accounts",
-    intent: "Funding announcements and investment theses from top VCs",
+    id: "ai-releases",
+    label: "AI model releases",
+    source: "custom",
+    title: "New AI model releases",
+    criteria: "Announcements of new LLM or multimodal model launches, benchmarks, or API availability from labs and vendors",
   },
   {
-    id: "follow-topic",
-    label: "Follow a topic",
-    watchType: "topics",
-    intent: "Breaking news and high-signal discussion about AI agents",
+    id: "vc-funding",
+    label: "VC funding",
+    source: "custom",
+    title: "Startup funding rounds",
+    criteria: "Seed through Series B announcements, notable investors, and round size from credible sources",
   },
   {
-    id: "monitor-founder",
-    label: "Monitor a founder",
-    watchType: "accounts",
-    intent: "Product launches, milestones, and notable takes from crypto founders",
+    id: "crypto-launches",
+    label: "Crypto launches",
+    source: "custom",
+    title: "Crypto product launches",
+    criteria: "Mainnet launches, token listings, protocol upgrades, and milestone announcements from founders and official accounts",
   },
 ];

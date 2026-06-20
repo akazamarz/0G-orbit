@@ -1,15 +1,15 @@
-export type WatchType = "accounts" | "lists" | "topics";
-
-export type AlertMode = "live" | "digest";
+export type TrackSource = "list" | "custom";
 
 export type FeedbackRating = "up" | "down";
 
 export interface Subscription {
   id: string;
   wallet: string;
-  intent: string;
-  watchType: WatchType;
-  mode: AlertMode;
+  source: TrackSource;
+  title: string;
+  criteria: string;
+  listId?: string;
+  notifyTelegram: boolean;
   generatedQuery: string;
   queryVersion: number;
   pollIntervalMs: number;
@@ -22,17 +22,20 @@ export interface Subscription {
 
 export interface SubscriptionInput {
   wallet: string;
-  intent: string;
-  watchType: WatchType;
-  mode: AlertMode;
+  source: TrackSource;
+  title: string;
+  criteria: string;
+  listId?: string;
+  notifyTelegram: boolean;
   storageRoot?: string;
   pollIntervalMs?: number;
 }
 
 export interface SubscriptionUpdate {
-  intent?: string;
-  watchType?: WatchType;
-  mode?: AlertMode;
+  title?: string;
+  criteria?: string;
+  listId?: string;
+  notifyTelegram?: boolean;
   paused?: boolean;
   pollIntervalMs?: number;
 }

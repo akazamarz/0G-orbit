@@ -43,18 +43,27 @@ function parseJson<T>(raw: string): T {
   return JSON.parse(cleaned) as T;
 }
 
-export async function intentToQuery(intent: string): Promise<IntentToQueryResult> {
+function trackPrompt(title: string, criteria: string): string {
+  return `Title: ${title}\nCriteria: ${criteria}`;
+}
+
+export async function trackToQuery(title: string, criteria: string): Promise<IntentToQueryResult> {
   const config = loadConfig();
-  const raw = await chat(config.AI_MODEL_CHAT, INTENT_TO_QUERY_PROMPT, intent);
+  const raw = await chat(config.AI_MODEL_CHAT, INTENT_TO_QUERY_PROMPT, trackPrompt(title, criteria));
   return parseJson<IntentToQueryResult>(raw);
 }
 
-export async function scoreTweet(intent: string, tweetText: string): Promise<ScoreResult> {
+/** @deprecated use trackToQuery */
+export async function intentToQuery(intent: string): Promise<IntentToQueryResult> {
+  return trackToQuery(intent.slice(0, 80), intent);
+}
+
+export async function scoreTweet(title: string, criteria: string, tweetText: string): Promise<ScoreResult> {
   const config = loadConfig();
   const raw = await chat(
     config.AI_MODEL_CHAT,
     SCORE_PROMPT,
-    `Intent: ${intent}\nTweet: ${tweetText}`,
+    `${trackPrompt(title, criteria)}\nTweet: ${tweetText}`,
   );
   return parseJson<ScoreResult>(raw);
 }
@@ -71,12 +80,12 @@ export async function digestBriefing(alertsText: string): Promise<string> {
   return briefing.trim();
 }
 
-export async function refineQuery(intent: string, currentQuery: string, negatives: string): Promise<IntentToQueryResult> {
+export async function refineQuery(title: string, criteria: string, currentQuery: string, negatives: string): Promise<IntentToQueryResult> {
   const config = loadConfig();
   const raw = await chat(
     config.AI_MODEL_REASONER,
     REFINE_PROMPT,
-    `Intent: ${intent}\nCurrent query: ${currentQuery}\nIrrelevant matches to exclude: ${negatives}`,
+    `${trackPrompt(title, criteria)}\nCurrent query: ${currentQuery}\nIrrelevant matches to exclude: ${negatives}`,
   );
   return parseJson<IntentToQueryResult>(raw);
 }

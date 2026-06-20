@@ -33,27 +33,27 @@ export default function SubscriptionDetail() {
       body: JSON.stringify({ paused: !sub.paused }),
     });
     if (!res.ok) {
-      toast("Failed to update orbit", "error");
+      toast("Failed to update track", "error");
       return;
     }
     setSub({ ...sub, paused: !sub.paused });
-    toast(sub.paused ? "Orbit resumed" : "Orbit paused", "success");
+    toast(sub.paused ? "Track resumed" : "Track paused", "success");
   }
 
   async function remove() {
-    if (!sub || !confirm("Delete this orbit? This cannot be undone.")) return;
+    if (!sub || !confirm("Delete this track? This cannot be undone.")) return;
     const res = await fetch(`/api/subscriptions/${sub.id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast("Failed to delete orbit", "error");
+      toast("Failed to delete track", "error");
       return;
     }
-    toast("Orbit deleted", "info");
+    toast("Track deleted", "info");
     void router.push("/dashboard");
   }
 
   if (!sub) {
     return (
-      <AppShell title="Orbit">
+      <AppShell title="Track">
         <Loading />
       </AppShell>
     );
@@ -62,14 +62,16 @@ export default function SubscriptionDetail() {
   return (
     <>
       <Head>
-        <title>{sub.intent.slice(0, 40)} - Orbit</title>
+        <title>{sub.title.slice(0, 40)} - Orbit</title>
       </Head>
       <AppShell
-        title={sub.intent}
+        title={sub.title}
         subtitle={
           <div className={styles.badges}>
-            <span className={styles.badge}>{sub.watchType}</span>
-            <span className={styles.badge}>{sub.mode}</span>
+            <span className={styles.badge}>{sub.source === "list" ? "X list" : "Custom topic"}</span>
+            <span className={styles.badge}>
+              {sub.notifyTelegram ? "Telegram + feed" : "Feed only"}
+            </span>
             <span className={sub.paused ? styles.paused : styles.active}>
               {sub.paused ? "Paused" : "Active"}
             </span>
@@ -86,12 +88,17 @@ export default function SubscriptionDetail() {
           </>
         }
       >
-        <code className={styles.query}>{sub.generatedQuery}</code>
+        <p className={styles.criteria}>{sub.criteria}</p>
+        {sub.source === "custom" && sub.generatedQuery ? (
+          <code className={styles.query}>{sub.generatedQuery}</code>
+        ) : sub.listId ? (
+          <p className={styles.listMeta}>List ID: {sub.listId}</p>
+        ) : null}
 
         <section className={styles.alerts}>
-          <h2 className={styles.heading}>Alerts ({alerts.length})</h2>
+          <h2 className={styles.heading}>Feed ({alerts.length})</h2>
           {alerts.length === 0 ? (
-            <p className={styles.empty}>No alerts yet for this orbit.</p>
+            <p className={styles.empty}>No matching posts yet.</p>
           ) : (
             alerts.map((a) => (
               <article key={a.id} className={styles.alert}>
