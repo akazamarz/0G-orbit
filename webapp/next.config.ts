@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
     "@wagmi/core",
     "@wagmi/connectors",
   ],
-  // Relative paths only — Turbopack on Windows rejects absolute resolveAlias.
+  // Relative paths only - Turbopack on Windows rejects absolute resolveAlias.
   turbopack: {
     resolveAlias: {
       wagmi: "./node_modules/wagmi",

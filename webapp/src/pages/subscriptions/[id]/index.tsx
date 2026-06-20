@@ -33,27 +33,27 @@ export default function SubscriptionDetail() {
       body: JSON.stringify({ paused: !sub.paused }),
     });
     if (!res.ok) {
-      toast("Failed to update track", "error");
+      toast("Failed to update orbit", "error");
       return;
     }
     setSub({ ...sub, paused: !sub.paused });
-    toast(sub.paused ? "Track resumed" : "Track paused", "success");
+    toast(sub.paused ? "Orbit resumed" : "Orbit paused", "success");
   }
 
   async function remove() {
-    if (!sub || !confirm("Delete this track? This cannot be undone.")) return;
+    if (!sub || !confirm("Delete this orbit? This cannot be undone.")) return;
     const res = await fetch(`/api/subscriptions/${sub.id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast("Failed to delete track", "error");
+      toast("Failed to delete orbit", "error");
       return;
     }
-    toast("Track deleted", "info");
+    toast("Orbit deleted", "info");
     void router.push("/dashboard");
   }
 
   if (!sub) {
     return (
-      <AppShell title="Track">
+      <AppShell title="Orbit">
         <Loading />
       </AppShell>
     );

@@ -22,18 +22,18 @@
   max-width: min(480px, calc(100vw - var(--space-6)));
   padding: var(--space-3) var(--space-5) var(--space-3) var(--space-4);
   border-radius: 999px;
-  background: rgba(12, 12, 14, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--bg-glass-solid);
+  border: 1px solid var(--border-subtle);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.4),
-    0 12px 40px rgba(0, 0, 0, 0.55);
+    0 0 0 1px var(--shadow-ring),
+    0 12px 40px var(--shadow-color);
   animation: signalIn 0.35s cubic-bezier(0.22, 1.1, 0.36, 1) both;
   overflow: hidden;
 }
 
-/* Orbit trail — full-width gradient hairline, not a side accent */
+/* Orbit trail - full-width gradient hairline, not a side accent */
 .toast::before {
   content: "";
   position: absolute;
@@ -41,14 +41,7 @@
   left: 8%;
   right: 8%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(79, 124, 255, 0.15),
-    rgba(177, 79, 255, 0.45),
-    rgba(79, 124, 255, 0.15),
-    transparent
-  );
+  background: var(--gradient-toast-trail);
   pointer-events: none;
 }
 
@@ -62,7 +55,7 @@
 .orbit {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(79, 124, 255, 0.35);
+  border: 1px solid var(--accent-alpha-35);
   border-radius: 50%;
   animation: orbitSpin 2.8s linear infinite;
 }
@@ -89,7 +82,7 @@
   margin: -2.5px 0 0 -2.5px;
   border-radius: 50%;
   background: var(--fg);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 8px var(--core-glow);
 }
 
 .message {
@@ -102,33 +95,33 @@
 }
 
 .success .orbit {
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: var(--success-alpha-40);
 }
 
 .success .orbit::after {
   background: var(--success);
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+  box-shadow: 0 0 6px var(--success-alpha-70);
 }
 
 .success .core {
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+  box-shadow: 0 0 8px var(--success-alpha-45);
 }
 
 .error .orbit {
-  border-color: rgba(239, 68, 68, 0.35);
+  border-color: var(--danger-alpha-35);
 }
 
 .error .orbit::after {
   background: var(--danger);
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.65);
+  box-shadow: 0 0 6px var(--danger-alpha-65);
 }
 
 .error .core {
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 8px var(--danger-alpha-40);
 }
 
 .info .orbit {
-  border-color: rgba(79, 124, 255, 0.4);
+  border-color: var(--accent-alpha-40);
 }
 
 @keyframes signalIn {

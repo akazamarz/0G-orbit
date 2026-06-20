@@ -36,7 +36,7 @@
 
 .badgeExpired {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .time {
@@ -63,7 +63,7 @@
 
 .signBtn {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);

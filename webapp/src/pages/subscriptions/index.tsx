@@ -50,13 +50,13 @@ export default function NewSubscription() {
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? "Failed to create track");
+        throw new Error(body.error ?? "Failed to create orbit");
       }
       const sub = (await res.json()) as Subscription;
       setCreated(sub);
       setTitle("");
       setCriteria("");
-      toast("Track created", "success");
+      toast("Orbit created", "success");
     } catch (err) {
       toast((err as Error).message, "error");
     } finally {
@@ -67,9 +67,9 @@ export default function NewSubscription() {
   return (
     <>
       <Head>
-        <title>New track - Orbit</title>
+        <title>New orbit - Orbit</title>
       </Head>
-      <AppShell title="New track">
+      <AppShell title="New orbit">
         {loading ? (
           <Loading />
         ) : !isAuthed ? (
@@ -159,19 +159,19 @@ export default function NewSubscription() {
                   <span className={styles.toggleHint}>
                     {notifyTelegram
                       ? "Matching posts also go to Telegram when linked"
-                      : "Feed only — alerts appear on your dashboard"}
+                      : "Feed only - alerts appear on your dashboard"}
                   </span>
                 </span>
               </label>
 
               <button className={styles.submit} type="submit" disabled={busy}>
-                {busy ? "Creating…" : "Create track"}
+                {busy ? "Creating…" : "Create orbit"}
               </button>
             </form>
 
             {created && (
               <div className={styles.success}>
-                <p className={styles.successTitle}>Track created</p>
+                <p className={styles.successTitle}>Orbit created</p>
                 {created.source === "custom" && created.generatedQuery ? (
                   <>
                     <p className={styles.queryLabel}>AI-generated query:</p>
@@ -182,7 +182,7 @@ export default function NewSubscription() {
                 )}
                 <div className={styles.successActions}>
                   <Link href={`/subscriptions/${created.id}`} className={styles.linkBtn}>
-                    View track
+                    View orbit
                   </Link>
                   {created.notifyTelegram && (
                     <Link href="/connect" className={styles.linkSecondary}>

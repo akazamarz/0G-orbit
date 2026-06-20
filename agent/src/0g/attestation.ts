@@ -25,7 +25,7 @@ export function getAttestationContract(): AttestationContract | null {
   const config = loadConfig();
   if (!config.ORBIT_ATTESTATION_ADDRESS) {
     if (!attestationDisabledLogged) {
-      logger.info("ORBIT_ATTESTATION_ADDRESS not set — on-chain attestation disabled");
+      logger.info("ORBIT_ATTESTATION_ADDRESS not set - on-chain attestation disabled");
       attestationDisabledLogged = true;
     }
     return null;

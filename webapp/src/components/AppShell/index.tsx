@@ -19,7 +19,7 @@ interface Props {
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/subscriptions", label: "New track" },
+  { href: "/subscriptions", label: "New orbit" },
   { href: "/connect", label: "Telegram" },
 ];
 

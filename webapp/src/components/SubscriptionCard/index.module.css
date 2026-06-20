@@ -1,6 +1,6 @@
 .card {
   display: block;
-  background: var(--bg-card);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-left: 3px solid transparent;
   border-radius: 4px;
@@ -43,6 +43,6 @@
 
 .paused {
   color: var(--warning);
-  border-color: rgba(245, 158, 11, 0.4);
+  border-color: var(--warning-alpha-40);
   background: transparent;
 }

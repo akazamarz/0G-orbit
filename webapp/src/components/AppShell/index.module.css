@@ -66,12 +66,12 @@
 
 .navLink:hover {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 .navActive {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-active);
 }
 
 .main {

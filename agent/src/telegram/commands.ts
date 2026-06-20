@@ -16,7 +16,7 @@ export function registerCommands(bot: Bot): void {
     const rows = getDb()
       .prepare("SELECT id, title, paused FROM subscriptions WHERE wallet = ?")
       .all(wallet) as { id: string; title: string; paused: number }[];
-    if (rows.length === 0) return ctx.reply("No active tracks.");
+    if (rows.length === 0) return ctx.reply("No active orbits.");
     const lines = rows.map((r) => `${r.paused ? "⏸" : "🛰"} ${r.title.slice(0, 50)} (id: ${r.id.slice(0, 8)})`);
     await ctx.reply(lines.join("\n"));
   });

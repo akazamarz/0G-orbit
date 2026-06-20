@@ -15,7 +15,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.78) 55%, #0a0a0a 100%);
+  background: var(--gradient-hero-overlay);
 }
 
 .topBar {
@@ -73,7 +73,7 @@
 }
 
 .gradient {
-  background: linear-gradient(135deg, var(--accent), #b14fff);
+  background: var(--gradient-brand);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -92,7 +92,7 @@
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
-  background: rgba(10, 10, 10, 0.6);
+  background: var(--cta-panel-bg);
 }
 
 .primary {
@@ -100,7 +100,7 @@
   align-items: center;
   justify-content: center;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   padding: 0.875rem 1.625rem;
   font-size: 0.9rem;
@@ -111,7 +111,7 @@
 
 .primary:hover {
   background: var(--accent-hover);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .secondary {
@@ -131,7 +131,7 @@
 
 .secondary:hover {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-muted);
 }
 
 .steps {

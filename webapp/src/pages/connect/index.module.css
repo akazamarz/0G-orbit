@@ -93,7 +93,7 @@
 
 .btn {
   background: #229ed9;
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid #229ed9;
   padding: var(--space-3) var(--space-5);
   border-radius: 4px;
@@ -129,7 +129,7 @@
 .deeplink {
   display: inline-block;
   background: #229ed9;
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid #229ed9;
   padding: var(--space-3) var(--space-5);
   border-radius: 4px;
@@ -142,7 +142,7 @@
 .deeplink:hover {
   background: #1d8bc4;
   border-color: #1d8bc4;
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .secondary {

@@ -5,7 +5,7 @@
 }
 
 .item {
-  background: var(--bg-card);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--space-3);

@@ -1,9 +1,9 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { AlertList } from "@/components/AlertList";
-import { EmptyState } from "@/components/EmptyState";
 import { Loading } from "@/components/Loading";
 import { WalletRequiredState } from "@/components/WalletRequiredState";
 import dynamic from "next/dynamic";
@@ -86,15 +86,7 @@ export default function Dashboard() {
   }, [isAuthed, fetchPending, toast]);
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
-
-  const statsLine =
-    isAuthed && !sessionLoading
-      ? `${subs.length} orbit${subs.length !== 1 ? "s" : ""} · ${alerts.length} alert${alerts.length !== 1 ? "s" : ""}${
-          pendingCount > 0
-            ? ` · ${pendingCount} pending attestation${pendingCount !== 1 ? "s" : ""}`
-            : ""
-        }`
-      : null;
+  const activeOrbits = subs.filter((s) => !s.paused).length;
 
   return (
     <>
@@ -107,49 +99,127 @@ export default function Dashboard() {
         ) : !isAuthed ? (
           <WalletRequiredState />
         ) : (
-          <>
-            {statsLine ? <p className={styles.stats}>{statsLine}</p> : null}
-            <section className={styles.section}>
-              <h2 className={styles.heading}>Your orbits</h2>
-              {dataLoading ? (
-                <Loading />
-              ) : subs.length === 0 ? (
-                <EmptyState
-                  title="No orbits yet"
-                  description="Create your first orbit to start tracking X with AI-filtered alerts."
-                  actionLabel="Create orbit"
-                  actionHref="/subscriptions"
-                />
-              ) : (
-                <div className={styles.grid}>
-                  {subs.map((s) => (
-                    <SubscriptionCard key={s.id} subscription={s} />
-                  ))}
+          <div className={styles.dashboard}>
+            <header className={styles.overview}>
+              <div className={styles.metrics}>
+                <div className={styles.metric}>
+                  <span className={styles.metricValue}>{subs.length}</span>
+                  <span className={styles.metricLabel}>
+                    orbit{subs.length !== 1 ? "s" : ""}
+                    {subs.length > 0 && (
+                      <span className={styles.metricSub}> · {activeOrbits} active</span>
+                    )}
+                  </span>
                 </div>
-              )}
-            </section>
+                <div className={styles.metricDivider} aria-hidden />
+                <div className={styles.metric}>
+                  <span className={styles.metricValue}>{alerts.length}</span>
+                  <span className={styles.metricLabel}>alert{alerts.length !== 1 ? "s" : ""}</span>
+                </div>
+                {pendingCount > 0 && (
+                  <>
+                    <div className={styles.metricDivider} aria-hidden />
+                    <div className={styles.metric}>
+                      <span className={`${styles.metricValue} ${styles.metricWarn}`}>{pendingCount}</span>
+                      <span className={styles.metricLabel}>pending</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className={styles.overviewActions}>
+                <Link href="/subscriptions" className={styles.ghostBtn}>
+                  + New orbit
+                </Link>
+                <Link href="/connect" className={styles.ghostBtn}>
+                  Telegram
+                </Link>
+              </div>
+            </header>
 
             {pendingAtts.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.heading}>Pending attestations</h2>
+              <section className={styles.attestBanner}>
+                <h2 className={styles.panelTitle}>Pending attestations</h2>
                 <PendingAttestations pending={pendingAtts} domain={domain} onAttested={fetchPending} />
               </section>
             )}
 
-            <section className={styles.section}>
-              <h2 className={styles.heading}>Recent alerts</h2>
-              {alerts.length === 0 ? (
-                <EmptyState
-                  title="No alerts yet"
-                  description="Alerts appear when your orbits find high-signal tweets. Make sure Telegram is connected for notifications."
-                  actionLabel="Connect Telegram"
-                  actionHref="/connect"
-                />
-              ) : (
-                <AlertList alerts={alerts.slice(0, 15)} />
-              )}
-            </section>
-          </>
+            <div className={styles.columns}>
+              <section className={styles.panel} aria-labelledby="orbits-heading">
+                <div className={styles.panelHead}>
+                  <h2 id="orbits-heading" className={styles.panelTitle}>
+                    Orbits
+                  </h2>
+                  {subs.length > 0 && (
+                    <Link href="/subscriptions" className={styles.panelLink}>
+                      Add
+                    </Link>
+                  )}
+                </div>
+                <div className={styles.panelBody}>
+                  {dataLoading ? (
+                    <Loading />
+                  ) : subs.length === 0 ? (
+                    <div className={styles.panelEmpty}>
+                      <span className={styles.panelEmptyIcon} aria-hidden>
+                        ◯
+                      </span>
+                      <div className={styles.panelEmptyText}>
+                        <p className={styles.panelEmptyTitle}>No orbits yet</p>
+                        <p className={styles.panelEmptyDesc}>
+                          Watch a list or topic - criteria decide what counts.
+                        </p>
+                      </div>
+                      <Link
+                        href="/subscriptions"
+                        className={`${styles.panelEmptyAction} ${styles.panelEmptyActionPrimary}`}
+                      >
+                        Create orbit
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className={styles.orbitList}>
+                      {subs.map((s) => (
+                        <SubscriptionCard key={s.id} subscription={s} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className={styles.panel} aria-labelledby="feed-heading">
+                <div className={styles.panelHead}>
+                  <h2 id="feed-heading" className={styles.panelTitle}>
+                    Signal feed
+                  </h2>
+                  {alerts.length > 0 && (
+                    <span className={styles.panelMeta}>Latest {Math.min(alerts.length, 15)}</span>
+                  )}
+                </div>
+                <div className={styles.panelBody}>
+                  {dataLoading ? (
+                    <Loading />
+                  ) : alerts.length === 0 ? (
+                    <div className={styles.panelEmpty}>
+                      <span className={styles.panelEmptyIcon} aria-hidden>
+                        ···
+                      </span>
+                      <div className={styles.panelEmptyText}>
+                        <p className={styles.panelEmptyTitle}>Quiet for now</p>
+                        <p className={styles.panelEmptyDesc}>
+                          High-signal posts show up here when an orbit matches. Telegram is optional.
+                        </p>
+                      </div>
+                      <Link href="/connect" className={styles.panelEmptyAction}>
+                        Connect Telegram
+                      </Link>
+                    </div>
+                  ) : (
+                    <AlertList alerts={alerts.slice(0, 15)} />
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
         )}
       </AppShell>
     </>

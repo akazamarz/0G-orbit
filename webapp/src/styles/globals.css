@@ -1,15 +1,80 @@
 :root {
-  --bg: #0a0a0a;
-  --bg-elevated: #141414;
-  --bg-card: #1a1a1a;
-  --fg: #ededed;
-  --fg-muted: #888;
-  --border: #262626;
-  --accent: #4f7cff;
-  --accent-hover: #6a90ff;
-  --success: #22c55e;
+  /* ── Orbit brand ── */
+  --orbit-purple: #a855f7;
+  --orbit-glow: #c084fc;
+  --orbit-pink: #ec4899;
+  --deep-space: #05020d;
+
+  /* ── Surfaces ── */
+  --bg: var(--deep-space);
+  --bg-elevated: #0e0918;
+  --bg-card: #140d22;
+  --bg-glass: rgba(5, 2, 13, 0.82);
+  --bg-glass-solid: rgba(12, 8, 20, 0.82);
+  --surface-hover: rgba(255, 255, 255, 0.03);
+  --surface-active: rgba(255, 255, 255, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.04);
+
+  /* ── Text ── */
+  --fg: #f2eaf9;
+  --fg-muted: #8f7da8;
+  --on-accent: #ffffff;
+
+  /* ── Borders ── */
+  --border: #2a1f3d;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+
+  /* ── Accent (semantic aliases) ── */
+  --accent: var(--orbit-purple);
+  --accent-hover: var(--orbit-glow);
+  --accent-secondary: var(--orbit-pink);
+
+  /* ── Accent alpha ── */
+  --accent-alpha-15: rgba(168, 85, 247, 0.15);
+  --accent-alpha-35: rgba(168, 85, 247, 0.35);
+  --accent-alpha-40: rgba(168, 85, 247, 0.4);
+  --orbit-pink-alpha-45: rgba(236, 72, 153, 0.45);
+  --orbit-glow-alpha-50: rgba(192, 132, 252, 0.5);
+  --selection-alpha: rgba(168, 85, 247, 0.35);
+
+  /* ── Status ── */
+  --success: #34d399;
   --warning: #f59e0b;
   --danger: #ef4444;
+  --success-alpha-40: rgba(52, 211, 153, 0.4);
+  --success-alpha-45: rgba(52, 211, 153, 0.45);
+  --success-alpha-70: rgba(52, 211, 153, 0.7);
+  --warning-alpha-40: rgba(245, 158, 11, 0.4);
+  --danger-alpha-35: rgba(239, 68, 68, 0.35);
+  --danger-alpha-40: rgba(239, 68, 68, 0.4);
+  --danger-alpha-65: rgba(239, 68, 68, 0.65);
+
+  /* ── Shadows & overlays ── */
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --shadow-ring: rgba(0, 0, 0, 0.4);
+  --hero-overlay-top: rgba(5, 2, 13, 0.4);
+  --hero-overlay-mid: rgba(5, 2, 13, 0.78);
+  --cta-panel-bg: rgba(5, 2, 13, 0.6);
+  --core-glow: rgba(255, 255, 255, 0.35);
+
+  /* ── Gradients ── */
+  --gradient-brand: linear-gradient(135deg, var(--orbit-purple), var(--orbit-pink));
+  --gradient-hero-overlay: linear-gradient(
+    180deg,
+    var(--hero-overlay-top) 0%,
+    var(--hero-overlay-mid) 55%,
+    var(--deep-space) 100%
+  );
+  --gradient-toast-trail: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-alpha-15),
+    var(--orbit-pink-alpha-45),
+    var(--accent-alpha-15),
+    transparent
+  );
+
+  /* ── Layout ── */
   --radius: 10px;
   --radius-sm: 6px;
   --space-1: 4px;
@@ -18,6 +83,8 @@
   --space-4: 24px;
   --space-5: 32px;
   --space-6: 48px;
+
+  /* ── Typography ── */
   --font-display: "Michroma", sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", Menlo, Consolas, monospace;
@@ -39,7 +106,7 @@ body {
 }
 
 ::selection {
-  background: rgba(79, 124, 255, 0.35);
+  background: var(--selection-alpha);
 }
 
 * {

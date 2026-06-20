@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const expectedNonce = getSiweNonceFromCookies(req.headers.cookie);
   if (!expectedNonce) {
-    return res.status(401).json({ error: "sign-in expired — connect wallet again" });
+    return res.status(401).json({ error: "sign-in expired - connect wallet again" });
   }
 
   try {
