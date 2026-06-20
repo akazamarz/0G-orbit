@@ -5,7 +5,6 @@ import { logger } from "../utils/logger.js";
 import {
   applyOrbitCreatedFloor,
   filterUnseen,
-  FIRST_POLL_MAX_PAGES,
   markSeen,
   searchAllPages,
   tweetTextForEval,
@@ -40,10 +39,8 @@ function pollSinceTimestamp(orbit: Orbit): Date {
   return new Date(sinceMs);
 }
 
-async function fetchTweets(orbit: Orbit, until: Date): Promise<Tweet[]> {
+async function fetchTweets(orbit: Orbit, until: Date, maxPages: number): Promise<Tweet[]> {
   const since = pollSinceTimestamp(orbit);
-  const isFirstPoll = orbit.lastPolledAt == null;
-  const maxPages = isFirstPoll ? FIRST_POLL_MAX_PAGES : undefined;
 
   if (orbit.source === "list") {
     if (!orbit.listId) {
@@ -58,8 +55,7 @@ async function fetchTweets(orbit: Orbit, until: Date): Promise<Tweet[]> {
         pollQuery,
         sinceMs: since.getTime(),
         untilMs: until.getTime(),
-        isFirstPoll,
-        maxPages: maxPages ?? "default",
+        maxPages,
       },
       "x list feed poll starting",
     );
@@ -88,8 +84,7 @@ async function fetchTweets(orbit: Orbit, until: Date): Promise<Tweet[]> {
       pollQuery,
       sinceMs: since.getTime(),
       untilMs: until.getTime(),
-      isFirstPoll,
-      maxPages: maxPages ?? "default",
+      maxPages,
     },
     "x search poll starting",
   );
@@ -128,7 +123,7 @@ export async function runOrbit(orbitId: string): Promise<void> {
 
   let tweets: Tweet[];
   try {
-    tweets = await fetchTweets(fresh, new Date(polledAt));
+    tweets = await fetchTweets(fresh, new Date(polledAt), config.X_POLL_MAX_PAGES);
   } catch (err) {
     logger.error({ err, orbitId: fresh.id }, "fetch tweets failed");
     return;

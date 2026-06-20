@@ -29,6 +29,8 @@ const envSchema = z.object({
   X_API_KEY: z.string().min(1),
   /** Global interval between full poll cycles (all orbits, sequential). */
   GLOBAL_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(600000),
+  /** Max advanced_search pages per poll (list + keyword). 1 ≈ 20 tweets. */
+  X_POLL_MAX_PAGES: z.coerce.number().int().positive().default(1),
   /** Posts per AI evaluation request (batch scoring + summaries). */
   AI_BATCH_SIZE: z.coerce.number().int().positive().default(5),
 

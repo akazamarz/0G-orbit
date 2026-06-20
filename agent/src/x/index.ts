@@ -1,4 +1,4 @@
-export { advancedSearch, searchAllPages, X_SEARCH_PAGE_SIZE, FIRST_POLL_MAX_PAGES } from "./client.js";
+export { advancedSearch, searchAllPages, X_SEARCH_PAGE_SIZE } from "./client.js";
 export type { SearchResult, PaginatedFetchContext } from "./client.js";
 export {
   buildPollSearchQuery,

@@ -8,12 +8,6 @@ import { filterListFeedTweets, mapTweet } from "./tweet.js";
 /** twitterapi.io returns up to 20 tweets per page. */
 export const X_SEARCH_PAGE_SIZE = 20;
 
-/** First poll: one page only — avoids burning API credits on backlog pagination. */
-export const FIRST_POLL_MAX_PAGES = 1;
-
-/** Safety cap — 50 pages × 20 tweets = 1000 tweets max per incremental poll. */
-const MAX_SEARCH_PAGES = 50;
-
 /** twitterapi.io rate limit guidance between search pages. */
 const PAGE_DELAY_MS = 320;
 
@@ -86,7 +80,7 @@ async function fetchAllPages(
   const all: Tweet[] = [];
   let cursor: string | undefined;
   let request = 0;
-  const pageCap = ctx.maxPages ?? MAX_SEARCH_PAGES;
+  const pageCap = ctx.maxPages ?? loadConfig().X_POLL_MAX_PAGES;
 
   while (request < pageCap) {
     request += 1;
