@@ -10,6 +10,7 @@ import {
 } from "../ai/client.js";
 import { toEntityOrQuery, needsQueryRegeneration, buildListFeedQueryBase } from "../x/query.js";
 import { orbitColumnNames } from "../db/migrate.js";
+import { scheduleOrbitStorage } from "../0g/persist.js";
 
 function rowToOrbit(row: Record<string, unknown>): Orbit {
   return {
@@ -158,7 +159,9 @@ export async function createOrbit(input: OrbitInput): Promise<Orbit> {
   });
 
   logger.info({ id, wallet: input.wallet, source: input.source, query: generatedQuery, listId }, "orbit created");
-  return getOrbit(id)!;
+  const orbit = getOrbit(id)!;
+  scheduleOrbitStorage(orbit);
+  return orbit;
 }
 
 export function getOrbit(id: string): Orbit | null {
@@ -236,7 +239,9 @@ export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbi
       now,
       id,
     );
-  return getOrbit(id);
+  const updated = getOrbit(id);
+  if (updated) scheduleOrbitStorage(updated);
+  return updated;
 }
 
 export function deleteOrbit(id: string): boolean {

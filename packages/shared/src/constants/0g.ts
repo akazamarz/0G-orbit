@@ -37,6 +37,10 @@ export const TELEGRAM = {
   apiBase: "https://api.telegram.org",
 } as const;
 
+export function zgStorageFileUrl(storageRoot: string): string {
+  return `${ZG_CHAIN.storageExplorer}/file/${storageRoot}`;
+}
+
 export const metamskAddChainParams = {
   chainId: ZG_CHAIN.chainIdHex,
   chainName: ZG_CHAIN.name,

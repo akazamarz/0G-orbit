@@ -1,6 +1,17 @@
 import { ethers } from "hardhat";
 
 async function main() {
+  const [deployer] = await ethers.getSigners();
+  if (!deployer) {
+    throw new Error(
+      "No deployer account. Set SERVER_PRIVATE_KEY in the repo-root .env and fund it on 0G testnet.",
+    );
+  }
+
+  console.log("Deploying from:", deployer.address);
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Balance:", ethers.formatEther(balance), "0G");
+
   const OrbitAttestation = await ethers.getContractFactory("OrbitAttestation");
   const contract = await OrbitAttestation.deploy();
   await contract.waitForDeployment();

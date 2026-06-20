@@ -20,6 +20,7 @@ import {
   getUpgradedCriteria,
   refreshOrbitQueryIfStale,
 } from "./repository.js";
+import { scheduleAlertStorage } from "../0g/persist.js";
 import type { Alert, Orbit, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 70;
@@ -193,7 +194,10 @@ export async function runOrbit(orbitId: string): Promise<void> {
         if (fresh.notifyTelegram && walletTelegram?.alertsEnabled && walletTelegram.chatId) {
           await sendAlert(walletTelegram.chatId, alert);
           markAlertSent(alert.id);
+          alert.sentToTelegram = true;
         }
+
+        scheduleAlertStorage(alert);
 
         logger.info(
           { alertId: alert.id, score: evaluation.score, reason: evaluation.reason },

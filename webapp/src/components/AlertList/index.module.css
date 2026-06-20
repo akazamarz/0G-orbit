@@ -71,6 +71,27 @@
   color: var(--fg);
 }
 
+.alertFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.storageLink,
+.txLink {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.storageLink:hover,
+.txLink:hover {
+  color: var(--accent-hover);
+}
+
 @media (max-width: 640px) {
   .alertTime {
     margin-left: 0;

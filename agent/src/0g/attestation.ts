@@ -142,7 +142,16 @@ export function listPendingAttestations(wallet: string): PendingAttestation[] {
 }
 
 export function markAttestationComplete(contentHash: string, txHash: string): void {
+  const attestedAt = Date.now();
   getDb()
-    .prepare("UPDATE pending_attestations SET status = 'attested', tx_hash = ?, attested_at = ? WHERE content_hash = ?")
-    .run(txHash, Date.now(), contentHash);
+    .prepare(
+      "UPDATE pending_attestations SET status = 'attested', tx_hash = ?, attested_at = ? WHERE content_hash = ?",
+    )
+    .run(txHash, attestedAt, contentHash);
+  getDb()
+    .prepare(
+      `UPDATE alerts SET attestation_tx_hash = ?
+       WHERE id = (SELECT digest_id FROM pending_attestations WHERE content_hash = ?)`,
+    )
+    .run(txHash, contentHash);
 }

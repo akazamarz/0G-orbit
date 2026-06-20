@@ -79,6 +79,17 @@
   word-break: break-all;
 }
 
+.storageLink {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--accent-hover);
+  word-break: break-all;
+}
+
+.storageLink:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .metaRow {
     grid-template-columns: 1fr;

@@ -1,5 +1,6 @@
 import styles from "./index.module.css";
 import { displayCriteria, formatWhen } from "@/lib/orbit-display";
+import { zgStorageFileUrl } from "@orbit/shared";
 import type { Orbit } from "@orbit/shared";
 
 interface Props {
@@ -77,6 +78,22 @@ export function OrbitDetailsMeta({ orbit }: Props) {
         <dt>Created</dt>
         <dd>{formatWhen(orbit.createdAt)}</dd>
       </div>
+
+      {orbit.storageRoot ? (
+        <div className={styles.metaRow}>
+          <dt>0G Storage</dt>
+          <dd>
+            <a
+              className={styles.storageLink}
+              href={zgStorageFileUrl(orbit.storageRoot)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {orbit.storageRoot.slice(0, 12)}…
+            </a>
+          </dd>
+        </div>
+      ) : null}
     </dl>
   );
 }

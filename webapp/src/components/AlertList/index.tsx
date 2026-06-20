@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FeedbackPill } from "@/components/FeedbackPill";
 import styles from "./index.module.css";
+import { ZG_CHAIN, zgStorageFileUrl } from "@orbit/shared";
 import type { Alert } from "@orbit/shared";
 
 interface Props {
@@ -43,7 +44,29 @@ export function AlertList({ alerts, orbitTitles }: Props) {
               </time>
             </div>
             <p className={styles.summary}>{a.summary}</p>
-            <FeedbackPill alertId={a.id} />
+            <div className={styles.alertFooter}>
+              <FeedbackPill alertId={a.id} />
+              {a.storageRoot ? (
+                <a
+                  className={styles.storageLink}
+                  href={zgStorageFileUrl(a.storageRoot)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  0G Storage
+                </a>
+              ) : null}
+              {a.attestationTxHash ? (
+                <a
+                  className={styles.txLink}
+                  href={`${ZG_CHAIN.explorer}/tx/${a.attestationTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Attested
+                </a>
+              ) : null}
+            </div>
           </article>
         );
       })}
