@@ -29,8 +29,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className={styles.container} aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`${styles.toast} ${styles[t.kind]}`}>
-            {t.message}
+          <div
+            key={t.id}
+            className={`${styles.toast} ${styles[t.kind]}`}
+            role="status"
+          >
+            <span className={styles.beacon} aria-hidden>
+              <span className={styles.orbit} />
+              <span className={styles.core} />
+            </span>
+            <span className={styles.message}>{t.message}</span>
           </div>
         ))}
       </div>

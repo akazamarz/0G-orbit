@@ -1,48 +1,175 @@
 .container {
   position: fixed;
-  bottom: var(--space-4);
-  right: var(--space-4);
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
-  max-width: 360px;
+  max-width: calc(100vw - var(--space-6));
+  pointer-events: none;
 }
 
 .toast {
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  font-size: 0.9rem;
+  pointer-events: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: fit-content;
+  max-width: min(480px, calc(100vw - var(--space-6)));
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-4);
+  border-radius: 999px;
+  background: rgba(12, 12, 14, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.55);
+  animation: signalIn 0.35s cubic-bezier(0.22, 1.1, 0.36, 1) both;
+  overflow: hidden;
+}
+
+/* Orbit trail — full-width gradient hairline, not a side accent */
+.toast::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(79, 124, 255, 0.15),
+    rgba(177, 79, 255, 0.45),
+    rgba(79, 124, 255, 0.15),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.beacon {
+  position: relative;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.orbit {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(79, 124, 255, 0.35);
+  border-radius: 50%;
+  animation: orbitSpin 2.8s linear infinite;
+}
+
+.orbit::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--fg);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.message {
+  font-size: 0.84rem;
   font-weight: 500;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  animation: slideIn 0.2s ease-out;
-}
-
-.success {
-  background: #14532d;
-  border: 1px solid var(--success);
-  color: #bbf7d0;
-}
-
-.error {
-  background: #450a0a;
-  border: 1px solid var(--danger);
-  color: #fecaca;
-}
-
-.info {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  letter-spacing: 0.01em;
+  line-height: 1.45;
   color: var(--fg);
+  text-align: left;
 }
 
-@keyframes slideIn {
+.success .orbit {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.success .orbit::after {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+}
+
+.success .core {
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+}
+
+.error .orbit {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.error .orbit::after {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.65);
+}
+
+.error .core {
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.info .orbit {
+  border-color: rgba(79, 124, 255, 0.4);
+}
+
+@keyframes signalIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(-12px) scale(0.94);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes orbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    top: var(--space-3);
+    max-width: calc(100vw - var(--space-4));
+  }
+
+  .toast {
+    max-width: calc(100vw - var(--space-4));
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .message {
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+
+  .orbit {
+    animation: none;
   }
 }
