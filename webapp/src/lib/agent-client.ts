@@ -1,6 +1,6 @@
-import { loadConfig } from "@orbit/shared";
+import { loadWebappConfig } from "./webapp-config";
 
-const config = loadConfig();
+const config = loadWebappConfig();
 
 export class AgentError extends Error {
   constructor(

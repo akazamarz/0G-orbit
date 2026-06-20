@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: [
     "@orbit/shared",
-    "@0gfoundation/0g-storage-ts-sdk",
     "@rainbow-me/rainbowkit",
     "wagmi",
     "@wagmi/core",

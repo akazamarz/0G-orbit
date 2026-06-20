@@ -1,8 +1,8 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { SiweMessage } from "siwe";
-import { loadConfig } from "@orbit/shared";
+import { loadWebappConfig } from "./webapp-config";
 
-const config = loadConfig();
+const config = loadWebappConfig();
 
 export interface Session {
   wallet: string;
