@@ -212,6 +212,164 @@
   color: var(--fg);
 }
 
+/* ── Linked profile ── */
+.profileCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-alpha-35);
+  border-radius: var(--radius-sm);
+  background: var(--accent-alpha-15);
+}
+
+.profileIcon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.profileName {
+  font-weight: 600;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.profileMeta {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+/* ── Toggle switch ── */
+.toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.toggle:hover {
+  border-color: var(--fg-muted);
+}
+
+.toggle:has(.toggleInput:checked) {
+  border-color: var(--accent-alpha-35);
+}
+
+.toggleInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.toggleSwitch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.2s ease;
+}
+
+.toggleSwitch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggleInput:checked ~ .toggleRow .toggleSwitch {
+  background: var(--accent);
+}
+
+.toggleInput:checked ~ .toggleRow .toggleSwitch::after {
+  transform: translateX(20px);
+  background: var(--on-accent);
+}
+
+.toggleInput:focus-visible ~ .toggleRow .toggleSwitch {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.toggleTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.toggleHint {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+
+.btnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  background: transparent;
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnDanger:hover:not(:disabled) {
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+.btnDanger:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 @media (max-width: 640px) {
   .steps {
     flex-direction: column;
@@ -223,7 +381,8 @@
   }
 
   .btnPrimary,
-  .btnGhost {
+  .btnGhost,
+  .btnDanger {
     width: 100%;
     align-self: stretch;
     text-align: center;

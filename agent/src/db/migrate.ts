@@ -38,3 +38,34 @@ export function migrateSubscriptionsTable(db: Database.Database): void {
     `);
   }
 }
+
+/** Create wallet_telegram and backfill from legacy subscriptions.telegram_chat_id. */
+export function migrateWalletTelegram(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS wallet_telegram (
+      wallet TEXT PRIMARY KEY,
+      chat_id INTEGER NOT NULL UNIQUE,
+      username TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      alerts_enabled INTEGER NOT NULL DEFAULT 1,
+      linked_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_wallet_telegram_chat ON wallet_telegram(chat_id);
+    CREATE INDEX IF NOT EXISTS idx_telegram_links_wallet ON telegram_links(wallet);
+  `);
+
+  db.exec(`
+    INSERT OR IGNORE INTO wallet_telegram (wallet, chat_id, alerts_enabled, linked_at, updated_at)
+    SELECT s.wallet, s.telegram_chat_id, 1, s.updated_at, s.updated_at
+    FROM subscriptions s
+    INNER JOIN (
+      SELECT wallet, MAX(updated_at) AS max_updated
+      FROM subscriptions
+      WHERE telegram_chat_id IS NOT NULL
+      GROUP BY wallet
+    ) latest ON s.wallet = latest.wallet AND s.updated_at = latest.max_updated
+    WHERE s.telegram_chat_id IS NOT NULL
+  `);
+}

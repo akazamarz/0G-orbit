@@ -10,16 +10,23 @@ import type {
   AttestationData,
   PendingAttestationsResponse,
   SignAttestationRequest,
+  UpdateWalletTelegramRequest,
+  WalletTelegramStatus,
 } from "@orbit/shared";
 import {
   createSubscription,
   deleteSubscription,
   listSubscriptions,
-  setTelegramChat,
   updateSubscription,
 } from "../orbits/repository.js";
 import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
-import { createLinkNonce, bindNonceToChat } from "../telegram/notify.js";
+import { createLinkNonce } from "../telegram/notify.js";
+import {
+  getWalletTelegramStatus,
+  isWalletTelegramLinked,
+  setWalletTelegramAlertsEnabled,
+  unlinkWalletTelegram,
+} from "../telegram/wallet.js";
 import { listPendingAttestations, attestWithSignature, getEIP712Domain, isAttestationEnabled } from "../0g/index.js";
 
 export function listAlerts(wallet: string, since = 0, limit = 50): Alert[] {
@@ -72,6 +79,9 @@ export function handleListSubscriptions(wallet: string): Subscription[] {
 }
 
 export function handleCreateTelegramLink(wallet: string): { nonce: string; deeplink: string } {
+  if (isWalletTelegramLinked(wallet)) {
+    throw Object.assign(new Error("Telegram already linked"), { status: 409 });
+  }
   const nonce = createLinkNonce(wallet);
   const config = loadConfig();
   const username = config.TELEGRAM_BOT_USERNAME.replace(/^@/, "");
@@ -81,10 +91,20 @@ export function handleCreateTelegramLink(wallet: string): { nonce: string; deepl
   };
 }
 
-export function handleLinkTelegram(nonce: string, chatId: number): string | null {
-  const wallet = bindNonceToChat(nonce, chatId);
-  if (wallet) setTelegramChat(wallet, chatId);
-  return wallet;
+export function handleGetWalletTelegram(wallet: string): WalletTelegramStatus {
+  return getWalletTelegramStatus(wallet);
+}
+
+export function handleUpdateWalletTelegram(
+  wallet: string,
+  update: UpdateWalletTelegramRequest,
+): WalletTelegramStatus | null {
+  const row = setWalletTelegramAlertsEnabled(wallet, update.alertsEnabled);
+  return row ? getWalletTelegramStatus(wallet) : null;
+}
+
+export function handleUnlinkWalletTelegram(wallet: string): boolean {
+  return unlinkWalletTelegram(wallet);
 }
 
 export function handleListPendingAttestations(wallet: string): PendingAttestationsResponse {

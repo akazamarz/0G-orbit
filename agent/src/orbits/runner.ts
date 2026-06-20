@@ -4,6 +4,8 @@ import { logger } from "../utils/logger.js";
 import { filterUnseen, markSeen, searchAllPages, listTimelineAllPages } from "../x/index.js";
 import { scoreTweet, briefAlert } from "../ai/client.js";
 import { sendAlert } from "../telegram/notify.js";
+import { getWalletTelegram } from "../telegram/wallet.js";
+import { getSubscription } from "./repository.js";
 import type { Alert, Subscription, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
@@ -24,25 +26,33 @@ async function fetchTweets(sub: Subscription): Promise<Tweet[]> {
 }
 
 export async function runSubscription(sub: Subscription): Promise<void> {
-  logger.info({ id: sub.id, source: sub.source, query: sub.generatedQuery, listId: sub.listId }, "polling subscription");
+  const fresh = getSubscription(sub.id);
+  if (!fresh || fresh.paused) return;
 
-  const tweets = await fetchTweets(sub);
-  const unseen = filterUnseen(sub.id, tweets);
+  logger.info(
+    { id: fresh.id, source: fresh.source, query: fresh.generatedQuery, listId: fresh.listId },
+    "polling subscription",
+  );
+
+  const walletTelegram = getWalletTelegram(fresh.wallet);
+
+  const tweets = await fetchTweets(fresh);
+  const unseen = filterUnseen(fresh.id, tweets);
   if (unseen.length === 0) {
-    logger.debug({ id: sub.id }, "no new tweets");
+    logger.debug({ id: fresh.id }, "no new tweets");
     return;
   }
 
   for (const tweet of unseen) {
-    markSeen(sub.id, tweet.id);
-    const { score, reason } = await scoreTweet(sub.title, sub.criteria, tweet.text);
+    markSeen(fresh.id, tweet.id);
+    const { score, reason } = await scoreTweet(fresh.title, fresh.criteria, tweet.text);
     if (score < SCORE_THRESHOLD) continue;
 
     const { summary } = await briefAlert(tweet.text);
     const alert: Alert = {
       id: randomUUID(),
-      subscriptionId: sub.id,
-      wallet: sub.wallet,
+      subscriptionId: fresh.id,
+      wallet: fresh.wallet,
       tweet,
       summary,
       score,
@@ -52,8 +62,8 @@ export async function runSubscription(sub: Subscription): Promise<void> {
 
     persistAlert(alert);
 
-    if (sub.notifyTelegram && sub.telegramChatId) {
-      await sendAlert(sub.telegramChatId, alert);
+    if (fresh.notifyTelegram && walletTelegram?.alertsEnabled && walletTelegram.chatId) {
+      await sendAlert(walletTelegram.chatId, alert);
       markAlertSent(alert.id);
     }
 

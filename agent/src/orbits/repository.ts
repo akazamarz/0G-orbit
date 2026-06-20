@@ -19,7 +19,6 @@ function rowToSub(row: Record<string, unknown>): Subscription {
     pollIntervalMs: Number(row.poll_interval_ms),
     paused: Boolean(row.paused),
     storageRoot: (row.storage_root as string) ?? undefined,
-    telegramChatId: (row.telegram_chat_id as number) ?? undefined,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -131,12 +130,6 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
 export function deleteSubscription(id: string): boolean {
   const info = getDb().prepare("DELETE FROM subscriptions WHERE id = ?").run(id);
   return info.changes > 0;
-}
-
-export function setTelegramChat(wallet: string, chatId: number): void {
-  getDb()
-    .prepare("UPDATE subscriptions SET telegram_chat_id = ?, updated_at = ? WHERE wallet = ?")
-    .run(chatId, Date.now(), wallet);
 }
 
 export function getActiveSubscriptions(): Subscription[] {

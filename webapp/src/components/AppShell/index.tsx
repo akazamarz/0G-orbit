@@ -20,7 +20,7 @@ interface Props {
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/subscriptions", label: "New orbit" },
-  { href: "/connect", label: "Telegram" },
+  { href: "/connect", label: "Alerts" },
 ];
 
 export function AppShell({ title, subtitle, actions, children }: Props) {

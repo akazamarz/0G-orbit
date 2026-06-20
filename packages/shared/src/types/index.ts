@@ -15,7 +15,6 @@ export interface Subscription {
   pollIntervalMs: number;
   paused: boolean;
   storageRoot?: string;
-  telegramChatId?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -104,6 +103,30 @@ export interface CreateTelegramLinkRequest {
 export interface LinkTelegramRequest {
   nonce: string;
   chatId: number;
+}
+
+export interface WalletTelegram {
+  wallet: string;
+  chatId: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  alertsEnabled: boolean;
+  linkedAt: number;
+  updatedAt: number;
+}
+
+export interface WalletTelegramStatus {
+  linked: boolean;
+  chatId?: number;
+  username?: string;
+  displayName?: string;
+  linkedAt?: number;
+  alertsEnabled: boolean;
+}
+
+export interface UpdateWalletTelegramRequest {
+  alertsEnabled: boolean;
 }
 
 export interface FeedbackRequest {

@@ -1,5 +1,7 @@
 import { getDb } from "../db/client.js";
 import type { Alert } from "@orbit/shared";
+import { getSubscription } from "../orbits/repository.js";
+import { formatAlertMessage } from "./messages.js";
 
 export interface TelegramNotifier {
   sendMessage(chatId: number, text: string): Promise<void>;
@@ -17,13 +19,8 @@ async function send(chatId: number, text: string): Promise<void> {
 }
 
 export async function sendAlert(chatId: number, alert: Alert): Promise<void> {
-  const text = [
-    `🛰️ Orbit Signal (score ${Math.round(alert.score)})`,
-    ``,
-    alert.summary,
-    ``,
-    `@${alert.tweet.author} · ${alert.tweet.url}`,
-  ].join("\n");
+  const sub = getSubscription(alert.subscriptionId);
+  const text = formatAlertMessage(alert, sub?.title);
   await send(chatId, text);
 }
 

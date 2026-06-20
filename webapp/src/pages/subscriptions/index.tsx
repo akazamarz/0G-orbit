@@ -183,7 +183,7 @@ export default function NewSubscription() {
                     </Link>
                     {created.notifyTelegram && (
                       <Link href="/connect" className={styles.btnGhost}>
-                        Connect Telegram
+                        Set up alerts
                       </Link>
                     )}
                   </div>

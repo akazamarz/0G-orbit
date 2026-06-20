@@ -1,8 +1,6 @@
-import { getActiveSubscriptions } from "./repository.js";
+import { getActiveSubscriptions, getSubscription } from "./repository.js";
 import { runSubscription } from "./runner.js";
-import { loadConfig } from "@orbit/shared";
 import { logger } from "../utils/logger.js";
-import type { Subscription } from "@orbit/shared";
 
 const timers = new Map<string, NodeJS.Timeout>();
 
@@ -16,25 +14,29 @@ export function startScheduler(): void {
 function refresh(): void {
   const active = getActiveSubscriptions();
   for (const sub of active) {
-    if (!timers.has(sub.id)) schedule(sub);
+    if (!timers.has(sub.id)) schedule(sub.id);
   }
   for (const id of timers.keys()) {
     if (!active.find((s) => s.id === id)) cancel(id);
   }
 }
 
-function schedule(sub: Subscription): void {
+function schedule(subscriptionId: string): void {
   const fire = async () => {
+    const sub = getSubscription(subscriptionId);
+    if (!sub || sub.paused) return;
     try {
       await runSubscription(sub);
     } catch (err) {
-      logger.error({ err, subId: sub.id }, "subscription run failed");
+      logger.error({ err, subId: subscriptionId }, "subscription run failed");
     }
   };
-  const timer = setInterval(fire, sub.pollIntervalMs);
-  timers.set(sub.id, timer);
+  const sub = getSubscription(subscriptionId);
+  const intervalMs = sub?.pollIntervalMs ?? 300000;
+  const timer = setInterval(fire, intervalMs);
+  timers.set(subscriptionId, timer);
   fire();
-  logger.info({ id: sub.id, intervalMs: sub.pollIntervalMs }, "subscription scheduled");
+  logger.info({ id: subscriptionId, intervalMs }, "subscription scheduled");
 }
 
 function cancel(id: string): void {
@@ -51,9 +53,8 @@ export function pauseSubscription(id: string): void {
 }
 
 export function resumeSubscription(id: string): void {
-  const active = getActiveSubscriptions();
-  const sub = active.find((s) => s.id === id);
-  if (sub) schedule(sub);
+  const sub = getSubscription(id);
+  if (sub && !sub.paused) schedule(id);
 }
 
 export function stopScheduler(): void {

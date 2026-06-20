@@ -131,7 +131,7 @@ export default function Dashboard() {
                   + New orbit
                 </Link>
                 <Link href="/connect" className={styles.ghostBtn}>
-                  Telegram
+                  Alerts
                 </Link>
               </div>
             </header>
@@ -210,7 +210,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <Link href="/connect" className={styles.panelEmptyAction}>
-                        Connect Telegram
+                        Set up alerts
                       </Link>
                     </div>
                   ) : (

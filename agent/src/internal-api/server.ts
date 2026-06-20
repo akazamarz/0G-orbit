@@ -1,7 +1,28 @@
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
-import { type HealthResponse, type SubscriptionInput, type SubscriptionUpdate, type FeedbackRequest, type LinkTelegramRequest, type SignAttestationRequest } from "@orbit/shared";
-import { verifyInternalSecret, handleCreateSubscription, handleUpdateSubscription, handleDeleteSubscription, handleListSubscriptions, listAlerts, recordFeedback, handleCreateTelegramLink, handleLinkTelegram, handleListPendingAttestations, handleSubmitAttestation } from "./handlers.js";
+import {
+  type HealthResponse,
+  type SubscriptionInput,
+  type SubscriptionUpdate,
+  type FeedbackRequest,
+  type SignAttestationRequest,
+  type UpdateWalletTelegramRequest,
+} from "@orbit/shared";
+import {
+  verifyInternalSecret,
+  handleCreateSubscription,
+  handleUpdateSubscription,
+  handleDeleteSubscription,
+  handleListSubscriptions,
+  listAlerts,
+  recordFeedback,
+  handleCreateTelegramLink,
+  handleGetWalletTelegram,
+  handleUpdateWalletTelegram,
+  handleUnlinkWalletTelegram,
+  handleListPendingAttestations,
+  handleSubmitAttestation,
+} from "./handlers.js";
 import { logger } from "../utils/logger.js";
 
 const app = new Hono();
@@ -68,16 +89,37 @@ app.post("/internal/feedback", secretMiddleware, async (c) => {
   return c.json(fb, 201);
 });
 
-app.post("/internal/telegram/link", secretMiddleware, async (c) => {
-  const body = (await c.req.json()) as { wallet: string };
-  return c.json(handleCreateTelegramLink(body.wallet), 201);
+app.get("/internal/telegram", secretMiddleware, (c) => {
+  const wallet = c.req.query("wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  return c.json(handleGetWalletTelegram(wallet));
 });
 
-app.post("/internal/link-telegram", secretMiddleware, async (c) => {
-  const body = (await c.req.json()) as LinkTelegramRequest;
-  const wallet = handleLinkTelegram(body.nonce, body.chatId);
-  if (!wallet) return c.json({ error: "invalid or expired nonce" }, 400);
-  return c.json({ ok: true, wallet });
+app.patch("/internal/telegram", secretMiddleware, async (c) => {
+  const wallet = c.req.query("wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  const body = (await c.req.json()) as UpdateWalletTelegramRequest;
+  const status = handleUpdateWalletTelegram(wallet, body);
+  if (!status) return c.json({ error: "not linked" }, 404);
+  return c.json(status);
+});
+
+app.post("/internal/telegram/link", secretMiddleware, async (c) => {
+  const body = (await c.req.json()) as { wallet: string };
+  try {
+    return c.json(handleCreateTelegramLink(body.wallet), 201);
+  } catch (err) {
+    const status = (err as Error & { status?: number }).status;
+    if (status === 409) return c.json({ error: "already linked" }, 409);
+    throw err;
+  }
+});
+
+app.post("/internal/telegram/unlink", secretMiddleware, async (c) => {
+  const body = (await c.req.json()) as { wallet: string };
+  const ok = handleUnlinkWalletTelegram(body.wallet);
+  if (!ok) return c.json({ error: "not linked" }, 404);
+  return c.json({ ok: true });
 });
 
 app.get("/internal/attestations/pending", secretMiddleware, (c) => {
