@@ -24,7 +24,7 @@ export function AlertList({ alerts, orbitTitles }: Props) {
         return (
           <article key={a.id} className={styles.alert}>
             {orbitTitle ? (
-              <Link href={`/subscriptions/${a.subscriptionId}`} className={styles.orbitTitle}>
+              <Link href={`/orbits/${a.subscriptionId}`} className={styles.orbitTitle}>
                 {orbitTitle}
               </Link>
             ) : null}

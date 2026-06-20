@@ -322,7 +322,7 @@ export default function Connect() {
                     </span>
                   </li>
                 </ol>
-                <Link href="/subscriptions" className={styles.btnGhost}>
+                <Link href="/orbits" className={styles.btnGhost}>
                   Create an orbit
                 </Link>
               </div>

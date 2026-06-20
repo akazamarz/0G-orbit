@@ -63,7 +63,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isAuthed) return;
     setSubsLoading(true);
-    void fetch("/api/subscriptions")
+    void fetch("/api/orbits")
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load orbits");
@@ -126,8 +126,8 @@ export default function Dashboard() {
                 )}
               </div>
               <div className={styles.overviewActions}>
-                <Link href="/subscriptions" className={styles.ghostBtn}>
-                  + New orbit
+                <Link href="/orbits" className={styles.ghostBtn}>
+                  Orbit
                 </Link>
                 <Link href="/connect" className={styles.ghostBtn}>
                   Alerts
@@ -149,8 +149,8 @@ export default function Dashboard() {
                     Orbits
                   </h2>
                   {subs.length > 0 && (
-                    <Link href="/subscriptions" className={styles.panelAddBtn}>
-                      + Add
+                    <Link href="/orbits" className={styles.panelAddBtn}>
+                      + Orbit
                     </Link>
                   )}
                 </div>
@@ -169,7 +169,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <Link
-                        href="/subscriptions"
+                        href="/orbits"
                         className={`${styles.panelEmptyAction} ${styles.panelEmptyActionPrimary}`}
                       >
                         Create orbit

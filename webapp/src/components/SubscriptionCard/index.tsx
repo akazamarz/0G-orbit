@@ -16,7 +16,7 @@ export function SubscriptionCard({ subscription }: Props) {
   const criteria = displayCriteria(subscription);
 
   return (
-    <Link href={`/subscriptions/${subscription.id}`} className={styles.card}>
+    <Link href={`/orbits/${subscription.id}`} className={styles.card}>
       <div className={styles.main}>
         <div className={styles.header}>
           <span className={styles.title}>{subscription.title}</span>
