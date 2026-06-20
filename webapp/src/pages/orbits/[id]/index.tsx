@@ -57,7 +57,7 @@ export default function OrbitDetail() {
               <h2 id="details-heading" className={styles.panelTitle}>
                 Orbit details
               </h2>
-              <Link href={`/orbits?id=${orbit.id}`} className={styles.panelLink}>
+              <Link href={`/orbits?id=${orbit.id}`} className={styles.panelAddBtn}>
                 Edit orbit
               </Link>
             </div>

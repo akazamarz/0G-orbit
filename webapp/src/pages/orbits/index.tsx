@@ -411,7 +411,7 @@ export default function OrbitPage() {
               <section className={styles.panel} aria-label="Orbit summary">
                 <div className={styles.panelHead}>
                   <h2 className={styles.panelTitle}>Current setup</h2>
-                  <Link href={`/orbits/${saved.id}`} className={styles.panelLink}>
+                  <Link href={`/orbits/${saved.id}`} className={styles.panelAddBtn}>
                     View feed
                   </Link>
                 </div>
