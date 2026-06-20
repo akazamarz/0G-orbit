@@ -145,6 +145,11 @@ export async function runOrbit(orbitId: string): Promise<void> {
     return;
   }
 
+  logger.debug(
+    { orbitId: fresh.id, upgradedCriteria, unseenCount: unseen.length },
+    "evaluating tweets against orbit criteria",
+  );
+
   for (const batch of chunk(unseen, batchSize)) {
     const indexed = batch.map((tweet, index) => ({
       index,

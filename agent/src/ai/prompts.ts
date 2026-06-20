@@ -38,27 +38,32 @@ Return STRICT JSON:
   "explanation": "<one sentence>"
 }`;
 
-export const BATCH_EVALUATE_PROMPT = `You evaluate a batch of tweets against one orbit tracking brief.
-Each tweet has a stable "index" (0-based position in the batch) and an "id" — copy both into your response.
+export const BATCH_EVALUATE_PROMPT = `You evaluate tweets against the user's criteria.
 
-RELEVANCE — be strict:
-- relevant=true ONLY when the tweet directly concerns what the brief asks to track (specific product/event/topic).
-- Company or brand news (hiring, funding, partnerships, lawsuits, executive moves) is NOT relevant unless it explicitly mentions the tracked product/event.
-- Mentioning a brand name alone is NOT enough — the content must match the brief's intent.
-- Tangential industry commentary, rumors about unrelated products, or generic hype score below 40.
+The user message contains the criteria — that is the ONLY standard for relevance.
 
-For EVERY input tweet:
-- index: same integer as input
-- id: same string as input
-- score: integer 0-100 (70+ only when clearly on-topic for the brief)
-- relevant: true only if the user should be alerted (score >= 70)
-- summary: required when relevant=true — one line, max 200 chars, factual, no URLs
+For each tweet, ask: does this post actually give the user what their criteria ask for?
+Examples of criteria types: product launch news, anime episode release, stock price moves, policy updates, event announcements — always judge against the specific criteria provided, not generic keyword overlap.
+
+If the tweet does NOT satisfy the criteria:
+- score: 0
+- relevant: false
+- omit summary (do not include the field)
 - reason: one short sentence
-Return ONLY valid JSON, no markdown, matching this shape exactly:
+
+If the tweet DOES satisfy the criteria:
+- score: 70-100 (strength of match)
+- relevant: true
+- summary: one factual line, max 200 chars, no URLs
+- reason: one short sentence
+
+Not relevant (score 0): jokes, memes, tangents, unrelated homonyms, bare name-drops, personal anecdotes, hype with no concrete info the criteria ask for.
+
+Return ONLY valid JSON:
 {
   "results": [
-    { "index": 0, "id": "123", "score": 82, "relevant": true, "summary": "...", "reason": "..." },
-    { "index": 1, "id": "456", "score": 12, "relevant": false, "reason": "..." }
+    { "index": 0, "id": "123", "score": 85, "relevant": true, "summary": "...", "reason": "..." },
+    { "index": 1, "id": "456", "score": 0, "relevant": false, "reason": "..." }
   ]
 }
 Rules:

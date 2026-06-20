@@ -137,7 +137,8 @@ function clampScore(value: unknown): number {
 
 function batchUserPrompt(upgradedCriteria: string, tweets: BatchTweetInput[]): string {
   return [
-    `Tracking brief:\n${upgradedCriteria}`,
+    "User criteria (sole standard for relevance — if a tweet does not satisfy this, score 0 and no summary):",
+    upgradedCriteria,
     "",
     `Evaluate exactly ${tweets.length} tweet(s).`,
     "Tweets:",
@@ -146,16 +147,18 @@ function batchUserPrompt(upgradedCriteria: string, tweets: BatchTweetInput[]): s
 }
 
 function rowToEvaluation(row: BatchEvaluateRow, fallbackIndex: number, fallbackId: string): BatchTweetEvaluation {
-  const score = clampScore(row.score);
-  const relevant = typeof row.relevant === "boolean" ? row.relevant : score >= SCORE_THRESHOLD;
+  const rawScore = clampScore(row.score);
   const summary = row.summary?.trim() || undefined;
+  const aiRelevant = row.relevant === true;
+  const relevant = aiRelevant && rawScore >= SCORE_THRESHOLD && Boolean(summary);
+
   return {
     index: typeof row.index === "number" ? row.index : fallbackIndex,
     id: typeof row.id === "string" && row.id.length > 0 ? row.id : fallbackId,
-    score,
-    relevant: relevant && score >= SCORE_THRESHOLD,
-    summary: relevant && score >= SCORE_THRESHOLD ? summary : undefined,
-    reason: row.reason?.trim() || "",
+    score: relevant ? rawScore : 0,
+    relevant,
+    summary: relevant ? summary : undefined,
+    reason: row.reason?.trim() || (relevant ? "" : "not relevant to criteria"),
   };
 }
 
