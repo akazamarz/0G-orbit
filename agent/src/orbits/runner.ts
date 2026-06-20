@@ -1,13 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { ethers } from "ethers";
-import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { filterUnseen, markSeen, searchAllPages, listTimelineAllPages } from "../x/index.js";
-import { scoreTweet, briefAlert, digestBriefing } from "../ai/client.js";
-import { uploadDigest, createPendingAttestation, isAttestationEnabled } from "../0g/index.js";
-import { sendAlert, sendDigest } from "../telegram/notify.js";
-import type { Alert, AlertDigest, Subscription, Tweet } from "@orbit/shared";
+import { scoreTweet, briefAlert } from "../ai/client.js";
+import { sendAlert } from "../telegram/notify.js";
+import type { Alert, Subscription, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
 
@@ -64,41 +61,6 @@ export async function runSubscription(sub: Subscription): Promise<void> {
   }
 }
 
-export async function runDigest(sub: Subscription): Promise<void> {
-  const since = Date.now() - 24 * 60 * 60 * 1000;
-  const alerts = listAlertsSince(sub.id, since);
-  if (alerts.length === 0) return;
-
-  const alertsText = alerts
-    .map((a) => `@${a.tweet.author}: ${a.tweet.text.slice(0, 120)}`)
-    .join("\n");
-  const briefing = await digestBriefing(alertsText);
-
-  const digest: AlertDigest = {
-    id: randomUUID(),
-    subscriptionId: sub.id,
-    wallet: sub.wallet,
-    alerts,
-    briefing,
-    createdAt: Date.now(),
-  };
-  const upload = await uploadDigest(digest, sub.wallet);
-  digest.storageRoot = upload.storageRoot;
-
-  if (isAttestationEnabled()) {
-    const contentHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(digest)));
-    const deadline = Date.now() + loadConfig().ATTESTATION_SIGN_DEADLINE_MS;
-    createPendingAttestation(sub.wallet, digest, contentHash, upload.storageRoot, deadline);
-    logger.info({ subId: sub.id, count: alerts.length, contentHash }, "digest stored, pending attestation");
-  } else {
-    logger.info({ subId: sub.id, count: alerts.length }, "digest stored");
-  }
-
-  if (sub.notifyTelegram && sub.telegramChatId) {
-    await sendDigest(sub.telegramChatId, briefing, alerts);
-  }
-}
-
 function persistAlert(alert: Alert): void {
   getDb()
     .prepare(
@@ -120,20 +82,4 @@ function persistAlert(alert: Alert): void {
 
 function markAlertSent(id: string): void {
   getDb().prepare("UPDATE alerts SET sent_to_telegram = 1 WHERE id = ?").run(id);
-}
-
-function listAlertsSince(subscriptionId: string, since: number): Alert[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM alerts WHERE subscription_id = ? AND created_at >= ? ORDER BY created_at")
-    .all(subscriptionId, since) as Record<string, unknown>[];
-  return rows.map((r) => ({
-    id: String(r.id),
-    subscriptionId: String(r.subscription_id),
-    wallet: String(r.wallet),
-    tweet: JSON.parse(String(r.tweet_json)),
-    summary: String(r.summary),
-    score: Number(r.score),
-    sentToTelegram: Boolean(r.sent_to_telegram),
-    createdAt: Number(r.created_at),
-  }));
 }

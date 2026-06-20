@@ -27,23 +27,6 @@ export async function sendAlert(chatId: number, alert: Alert): Promise<void> {
   await send(chatId, text);
 }
 
-export async function sendDigest(
-  chatId: number,
-  briefing: string,
-  alerts: Alert[],
-): Promise<void> {
-  const lines = [
-    `📋 Orbit Daily Digest - ${alerts.length} signals`,
-    ``,
-    briefing,
-    ``,
-    ...alerts.slice(0, 5).map((a) => `• ${a.summary} (@${a.tweet.author})`),
-    ``,
-    `🔗 Digest stored on 0G Storage. Sign in to Orbit to attest on-chain.`,
-  ];
-  await send(chatId, lines.join("\n"));
-}
-
 export function createLinkNonce(wallet: string): string {
   const nonce = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   getDb()

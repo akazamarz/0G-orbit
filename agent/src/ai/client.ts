@@ -3,7 +3,7 @@ import { loadConfig, type BriefResult, type IntentToQueryResult, type ScoreResul
 import { logger } from "../utils/logger.js";
 import { ExternalApiError } from "../utils/errors.js";
 import { retry } from "../utils/retry.js";
-import { INTENT_TO_QUERY_PROMPT, SCORE_PROMPT, BRIEF_PROMPT, DIGEST_PROMPT, REFINE_PROMPT } from "./prompts.js";
+import { INTENT_TO_QUERY_PROMPT, SCORE_PROMPT, BRIEF_PROMPT } from "./prompts.js";
 
 let client: OpenAI | null = null;
 
@@ -53,11 +53,6 @@ export async function trackToQuery(title: string, criteria: string): Promise<Int
   return parseJson<IntentToQueryResult>(raw);
 }
 
-/** @deprecated use trackToQuery */
-export async function intentToQuery(intent: string): Promise<IntentToQueryResult> {
-  return trackToQuery(intent.slice(0, 80), intent);
-}
-
 export async function scoreTweet(title: string, criteria: string, tweetText: string): Promise<ScoreResult> {
   const config = loadConfig();
   const raw = await chat(
@@ -72,20 +67,4 @@ export async function briefAlert(tweetText: string): Promise<BriefResult> {
   const config = loadConfig();
   const summary = await chat(config.AI_MODEL_CHAT, BRIEF_PROMPT, tweetText);
   return { summary: summary.trim() };
-}
-
-export async function digestBriefing(alertsText: string): Promise<string> {
-  const config = loadConfig();
-  const briefing = await chat(config.AI_MODEL_REASONER, DIGEST_PROMPT, alertsText);
-  return briefing.trim();
-}
-
-export async function refineQuery(title: string, criteria: string, currentQuery: string, negatives: string): Promise<IntentToQueryResult> {
-  const config = loadConfig();
-  const raw = await chat(
-    config.AI_MODEL_REASONER,
-    REFINE_PROMPT,
-    `${trackPrompt(title, criteria)}\nCurrent query: ${currentQuery}\nIrrelevant matches to exclude: ${negatives}`,
-  );
-  return parseJson<IntentToQueryResult>(raw);
 }

@@ -54,8 +54,3 @@ export async function downloadJson(storageRoot: string): Promise<unknown> {
     await unlink(tmpPath).catch(() => {});
   }
 }
-
-export async function uploadDigest(digest: unknown, walletAddress: string): Promise<UploadResult> {
-  const label = `orbit/digests/${walletAddress}/${Date.now()}.json`;
-  return uploadJson(digest, label);
-}

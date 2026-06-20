@@ -133,13 +133,6 @@ export interface BriefResult {
   summary: string;
 }
 
-export interface TrendSignal {
-  subscriptionIds: string[];
-  topic: string;
-  count: number;
-  detectedAt: number;
-}
-
 export interface AttestationData {
   wallet: string;
   contentHash: string;
