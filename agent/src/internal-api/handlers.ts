@@ -7,7 +7,9 @@ import type {
   OrbitInput,
   OrbitUpdate,
   AttestationData,
+  AttestationStatusResponse,
   PendingAttestationsResponse,
+  PendingAttestation,
   SignAttestationRequest,
   UpdateWalletTelegramRequest,
   WalletTelegramStatus,
@@ -27,7 +29,14 @@ import {
   setWalletTelegramAlertsEnabled,
   unlinkWalletTelegram,
 } from "../telegram/wallet.js";
-import { listPendingAttestations, attestWithSignature, getEIP712Domain, isAttestationEnabled } from "../0g/index.js";
+import {
+  listPendingAttestations,
+  attestWithSignature,
+  getEIP712Domain,
+  isAttestationEnabled,
+  getAttestationStatus,
+} from "../0g/index.js";
+import { createAttestationBatch } from "../0g/batch.js";
 
 export { listAlertFeed, countAlerts, parseAlertCursor } from "../alerts/repository.js";
 
@@ -100,6 +109,14 @@ export function handleListPendingAttestations(wallet: string): PendingAttestatio
     pending: listPendingAttestations(wallet),
     domain: getEIP712Domain(),
   };
+}
+
+export function handleGetAttestationStatus(wallet: string): AttestationStatusResponse {
+  return getAttestationStatus(wallet);
+}
+
+export async function handleCreateAttestationBatch(wallet: string): Promise<PendingAttestation> {
+  return createAttestationBatch(wallet);
 }
 
 export async function handleSubmitAttestation(

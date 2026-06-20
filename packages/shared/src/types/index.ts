@@ -229,6 +229,10 @@ export interface PendingAttestation {
   storageRoot: string;
   digestId: string;
   briefing: string;
+  /** Number of alerts covered by this batch manifest. */
+  alertCount: number;
+  /** Preview lines for batch UI (newest-first summaries). */
+  alertSummaries?: string[];
   deadline: number;
   status: "pending" | "attested" | "expired";
   txHash?: string;
@@ -240,6 +244,15 @@ export interface PendingAttestationsResponse {
   enabled: boolean;
   pending: PendingAttestation[];
   domain: EIP712Domain | null;
+}
+
+export interface AttestationStatusResponse {
+  enabled: boolean;
+  domain: EIP712Domain | null;
+  /** Alerts on 0G Storage not yet covered by an on-chain attestation. */
+  unattestedCount: number;
+  /** Ready-to-sign batch (manifest already on 0G). */
+  pendingBatch: PendingAttestation | null;
 }
 
 export interface SignAttestationRequest {

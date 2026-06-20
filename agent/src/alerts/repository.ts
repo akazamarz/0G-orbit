@@ -90,3 +90,32 @@ export function listAlertFeed(params: ListAlertFeedParams): AlertFeedResponse {
     total: countAlerts(params.wallet, params.orbitId),
   };
 }
+
+export function listUnattestedAlerts(wallet: string): Alert[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM alerts
+       WHERE wallet = ?
+         AND storage_root IS NOT NULL
+         AND storage_root != ''
+         AND (attestation_tx_hash IS NULL OR attestation_tx_hash = '')
+       ORDER BY created_at ASC`,
+    )
+    .all(wallet) as Record<string, unknown>[];
+  return rows.map(rowToAlert);
+}
+
+export function countUnattestedAlerts(wallet: string): number {
+  const row = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS c FROM alerts
+       WHERE wallet = ?
+         AND storage_root IS NOT NULL
+         AND storage_root != ''
+         AND (attestation_tx_hash IS NULL OR attestation_tx_hash = '')`,
+    )
+    .get(wallet) as { c: number };
+  return Number(row.c);
+}
+
+export { rowToAlert };

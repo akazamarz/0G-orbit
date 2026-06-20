@@ -1,9 +1,8 @@
 import { ethers } from "ethers";
-import { loadConfig, type Alert, type AlertDigest, type Orbit } from "@orbit/shared";
+import type { Alert, Orbit } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { uploadJson } from "./storage.js";
-import { createPendingAttestation, isAttestationEnabled } from "./attestation.js";
 
 const STORAGE_SCHEMA_VERSION = 1;
 
@@ -106,25 +105,9 @@ async function persistOrbitToStorage(orbit: Orbit): Promise<void> {
 
 async function persistAlertToStorage(alert: Alert): Promise<void> {
   const payload = buildAlertPayload(alert);
-  const { storageRoot, contentHash } = await persistPayload(`alert-${alert.id}`, payload);
+  const { storageRoot } = await persistPayload(`alert-${alert.id}`, payload);
   updateAlertStorageRoot(alert.id, storageRoot);
   logger.info({ alertId: alert.id, storageRoot }, "alert stored on 0g");
-
-  if (!isAttestationEnabled()) return;
-
-  const digest: AlertDigest = {
-    id: alert.id,
-    orbitId: alert.orbitId,
-    wallet: alert.wallet,
-    alerts: [{ ...alert, storageRoot }],
-    briefing: alert.summary,
-    storageRoot,
-    createdAt: alert.createdAt,
-  };
-
-  const deadline = Date.now() + loadConfig().ATTESTATION_SIGN_DEADLINE_MS;
-  createPendingAttestation(alert.wallet, digest, contentHash, storageRoot, deadline);
-  logger.info({ alertId: alert.id, contentHash }, "pending attestation queued");
 }
 
 /** Fire-and-forget: SQLite is already written; 0G upload runs in background. */

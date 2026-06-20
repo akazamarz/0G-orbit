@@ -223,17 +223,6 @@
   color: var(--on-accent);
 }
 
-.attestBanner {
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.attestBanner .panelTitle {
-  margin-bottom: var(--space-3);
-}
-
 @media (max-width: 640px) {
   .overview {
     flex-direction: column;

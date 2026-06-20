@@ -1,47 +1,52 @@
 import { useState } from "react";
 import { useSignTypedData, useAccount } from "wagmi";
 import styles from "./index.module.css";
-import type { EIP712Domain, PendingAttestation } from "@orbit/shared";
-import { ZG_CHAIN } from "@orbit/shared";
+import type { AttestationStatusResponse } from "@orbit/shared";
+import { ZG_CHAIN, zgStorageFileUrl } from "@orbit/shared";
 import { ATTESTATION_TYPES } from "@/lib/attestation-types";
 import { useToast } from "@/components/Toast";
 
 interface Props {
-  pending: PendingAttestation[];
-  domain: EIP712Domain | null;
-  onAttested: () => void;
+  status: AttestationStatusResponse;
+  onRefresh: () => void;
 }
 
-export function PendingAttestations({ pending, domain, onAttested }: Props) {
+export function PendingAttestations({ status, onRefresh }: Props) {
   const { isConnected } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const { toast } = useToast();
-  const [signing, setSigning] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  if (pending.length === 0) return null;
+  if (!status.enabled) return null;
 
-  async function handleSign(att: PendingAttestation) {
-    if (!domain) return;
+  const batch = status.pendingBatch;
+  const readyToSign = batch?.status === "pending";
+  const count = status.unattestedCount;
+
+  if (count === 0 && !readyToSign) return null;
+
+  async function handleSign(): Promise<void> {
+    if (!batch || !status.domain) return;
     if (!isConnected) {
       toast("Connect your wallet first", "error");
       return;
     }
 
-    setSigning(att.id);
+    setBusy(true);
     try {
       const signature = await signTypedDataAsync({
         domain: {
-          name: domain.name,
-          version: domain.version,
-          chainId: domain.chainId,
-          verifyingContract: domain.verifyingContract as `0x${string}`,
+          name: status.domain!.name,
+          version: status.domain!.version,
+          chainId: status.domain!.chainId,
+          verifyingContract: status.domain!.verifyingContract as `0x${string}`,
         },
         types: ATTESTATION_TYPES,
         primaryType: "AttestationRequest",
         message: {
-          contentHash: att.contentHash as `0x${string}`,
-          storageRoot: att.storageRoot,
-          deadline: BigInt(att.deadline),
+          contentHash: batch.contentHash as `0x${string}`,
+          storageRoot: batch.storageRoot,
+          deadline: BigInt(batch.deadline),
         },
       });
 
@@ -49,9 +54,9 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          contentHash: att.contentHash,
-          storageRoot: att.storageRoot,
-          deadline: att.deadline,
+          contentHash: batch.contentHash,
+          storageRoot: batch.storageRoot,
+          deadline: batch.deadline,
           signature,
         }),
       });
@@ -62,8 +67,8 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
       }
 
       const result = (await res.json()) as { txHash: string };
-      toast("Attestation confirmed on-chain", "success");
-      onAttested();
+      toast(`Attested ${batch.alertCount} alert${batch.alertCount !== 1 ? "s" : ""} on-chain`, "success");
+      onRefresh();
       window.open(`${ZG_CHAIN.explorer}/tx/${result.txHash}`, "_blank");
     } catch (err) {
       const msg = (err as Error).message;
@@ -71,58 +76,153 @@ export function PendingAttestations({ pending, domain, onAttested }: Props) {
         toast(msg, "error");
       }
     } finally {
-      setSigning(null);
+      setBusy(false);
     }
   }
 
-  return (
-    <div className={styles.list}>
-      {pending.map((att) => {
-        const isExpired = att.status === "expired";
-        const isAttested = att.status === "attested";
-        const isPending = att.status === "pending";
+  async function handlePrepareAndSign(): Promise<void> {
+    if (readyToSign) {
+      await handleSign();
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/attestations/batch", { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Failed to prepare batch");
+      }
+      const prepared = (await res.json()) as NonNullable<AttestationStatusResponse["pendingBatch"]>;
+      onRefresh();
 
-        return (
-          <article key={att.id} className={styles.item}>
-            <div className={styles.top}>
-              <span
-                className={`${styles.badge} ${
-                  isAttested ? styles.badgeAttested : isExpired ? styles.badgeExpired : styles.badgePending
-                }`}
-              >
-                {isAttested ? "Attested" : isExpired ? "Expired" : "Pending"}
-              </span>
-              <span className={styles.time}>{new Date(att.createdAt).toLocaleString()}</span>
-            </div>
-            <p className={styles.briefing}>{att.briefing}</p>
-            <div className={styles.meta}>
-              <span className={styles.hash}>root: {att.storageRoot.slice(0, 16)}…</span>
-            </div>
+      if (!status.domain || !isConnected) {
+        toast("Batch prepared — connect wallet and tap Attest when ready", "success");
+        return;
+      }
 
-            {isPending && (
-              <button
-                type="button"
-                className={styles.signBtn}
-                onClick={() => void handleSign(att)}
-                disabled={signing === att.id}
-              >
-                {signing === att.id ? "Confirm in wallet…" : "Attest on-chain"}
-              </button>
-            )}
+      const signature = await signTypedDataAsync({
+        domain: {
+          name: status.domain.name,
+          version: status.domain.version,
+          chainId: status.domain.chainId,
+          verifyingContract: status.domain.verifyingContract as `0x${string}`,
+        },
+        types: ATTESTATION_TYPES,
+        primaryType: "AttestationRequest",
+        message: {
+          contentHash: prepared.contentHash as `0x${string}`,
+          storageRoot: prepared.storageRoot,
+          deadline: BigInt(prepared.deadline),
+        },
+      });
 
-            {isAttested && att.txHash && (
-              <a
-                className={styles.txLink}
-                href={`${ZG_CHAIN.explorer}/tx/${att.txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on explorer →
-              </a>
-            )}
-          </article>
+      const signRes = await fetch("/api/attestations/sign", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          contentHash: prepared.contentHash,
+          storageRoot: prepared.storageRoot,
+          deadline: prepared.deadline,
+          signature,
+        }),
+      });
+
+      if (!signRes.ok) {
+        const body = (await signRes.json()) as { error?: string };
+        throw new Error(body.error ?? "Attestation failed");
+      }
+
+      const result = (await signRes.json()) as { txHash: string };
+      toast(`Attested ${prepared.alertCount} alert${prepared.alertCount !== 1 ? "s" : ""} on-chain`, "success");
+      onRefresh();
+      window.open(`${ZG_CHAIN.explorer}/tx/${result.txHash}`, "_blank");
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (!msg.toLowerCase().includes("rejected")) {
+        toast(msg, "error");
+      }
+      onRefresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const summaries = batch?.alertSummaries ?? [];
+  const displayCount = batch?.alertCount ?? count;
+
+  const introCopy =
+    displayCount === 1
+      ? (
+          <>
+            Alerts are already on <strong>0G Storage</strong>. Attesting is optional —{" "}
+            <strong>one wallet signature</strong> records that alert on-chain via a single manifest on 0G.
+          </>
+        )
+      : (
+          <>
+            Alerts are already on <strong>0G Storage</strong>. Attesting is optional —{" "}
+            <strong>one wallet signature</strong> covers all {displayCount} alerts in a single batch manifest
+            on 0G.
+          </>
         );
-      })}
+
+  return (
+    <div className={styles.wrap}>
+      <p className={styles.intro}>{introCopy}</p>
+
+      <div className={styles.toolbar}>
+        <span className={styles.count}>
+          {readyToSign
+            ? `${displayCount} alert${displayCount !== 1 ? "s" : ""} ready to sign`
+            : `${count} alert${count !== 1 ? "s" : ""} not yet attested`}
+        </span>
+        {readyToSign ? (
+          <button type="button" className={styles.primaryBtn} onClick={() => void handleSign()} disabled={busy}>
+            {busy ? "Confirm in wallet…" : `Attest ${displayCount} on-chain`}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.primaryBtn}
+            onClick={() => void handlePrepareAndSign()}
+            disabled={busy}
+          >
+            {busy ? "Preparing batch…" : `Attest ${count} on-chain`}
+          </button>
+        )}
+      </div>
+
+      {readyToSign && batch ? (
+        <div className={styles.metaRow}>
+          <a
+            className={styles.storageLink}
+            href={zgStorageFileUrl(batch.storageRoot)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Batch manifest on 0G
+          </a>
+        </div>
+      ) : null}
+
+      {summaries.length > 0 ? (
+        <ul className={styles.summaryList}>
+          {summaries.slice(0, 8).map((summary, index) => (
+            <li key={`${index}-${summary.slice(0, 24)}`} className={styles.summaryItem}>
+              {summary}
+            </li>
+          ))}
+          {summaries.length > 8 ? (
+            <li className={styles.summaryMore}>+{summaries.length - 8} more in this batch</li>
+          ) : null}
+        </ul>
+      ) : null}
+
+      {readyToSign ? (
+        <p className={styles.hint}>
+          Batch prepared. If you closed MetaMask, use <button type="button" className={styles.linkBtn} onClick={() => void handleSign()} disabled={busy}>Attest {displayCount} on-chain</button> when ready.
+        </p>
+      ) : null}
     </div>
   );
 }

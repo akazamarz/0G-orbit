@@ -22,6 +22,8 @@ import {
   handleUpdateWalletTelegram,
   handleUnlinkWalletTelegram,
   handleListPendingAttestations,
+  handleGetAttestationStatus,
+  handleCreateAttestationBatch,
   handleSubmitAttestation,
 } from "./handlers.js";
 import { logger } from "../utils/logger.js";
@@ -137,6 +139,24 @@ app.get("/internal/attestations/pending", secretMiddleware, (c) => {
   const wallet = c.req.query("wallet");
   if (!wallet) return c.json({ error: "wallet required" }, 400);
   return c.json(handleListPendingAttestations(wallet));
+});
+
+app.get("/internal/attestations/status", secretMiddleware, (c) => {
+  const wallet = c.req.query("wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  return c.json(handleGetAttestationStatus(wallet));
+});
+
+app.post("/internal/attestations/batch", secretMiddleware, async (c) => {
+  const wallet = c.req.header("x-user-wallet");
+  if (!wallet) return c.json({ error: "wallet required" }, 400);
+  try {
+    const batch = await handleCreateAttestationBatch(wallet);
+    return c.json(batch, 201);
+  } catch (err) {
+    logger.error({ err }, "attestation batch failed");
+    return c.json({ error: (err as Error).message }, 500);
+  }
 });
 
 app.post("/internal/attestations/sign", secretMiddleware, async (c) => {

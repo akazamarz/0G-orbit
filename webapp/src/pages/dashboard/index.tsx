@@ -12,7 +12,7 @@ import { useSession } from "@/hooks/useSession";
 import { useAlertFeed } from "@/hooks/useAlertFeed";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
-import type { Orbit, PendingAttestation, EIP712Domain } from "@orbit/shared";
+import type { Orbit, AttestationStatusResponse } from "@orbit/shared";
 
 const PendingAttestations = dynamic(
   () => import("@/components/PendingAttestations").then((m) => m.PendingAttestations),
@@ -23,8 +23,7 @@ export default function Dashboard() {
   const { loading: sessionLoading, isAuthed } = useSession();
   const { toast } = useToast();
   const [orbits, setOrbits] = useState<Orbit[]>([]);
-  const [pendingAtts, setPendingAtts] = useState<PendingAttestation[]>([]);
-  const [domain, setDomain] = useState<EIP712Domain | null>(null);
+  const [attestationStatus, setAttestationStatus] = useState<AttestationStatusResponse | null>(null);
   const [subsLoading, setSubsLoading] = useState(false);
 
   const {
@@ -39,24 +38,18 @@ export default function Dashboard() {
     pollIntervalMs: 15_000,
   });
 
-  const fetchPending = useCallback(() => {
-    void fetch("/api/attestations/pending")
+  const fetchAttestationStatus = useCallback(() => {
+    void fetch("/api/attestations/status")
       .then(async (r) => {
         if (!r.ok) return null;
-        return r.json() as Promise<{
-          enabled: boolean;
-          pending: PendingAttestation[];
-          domain: EIP712Domain | null;
-        }>;
+        return r.json() as Promise<AttestationStatusResponse>;
       })
       .then((d) => {
         if (!d?.enabled) {
-          setPendingAtts([]);
-          setDomain(null);
+          setAttestationStatus(null);
           return;
         }
-        setPendingAtts(Array.isArray(d.pending) ? d.pending : []);
-        setDomain(d.domain ?? null);
+        setAttestationStatus(d);
       });
   }, []);
 
@@ -75,12 +68,15 @@ export default function Dashboard() {
         setOrbits([]);
       })
       .finally(() => setSubsLoading(false));
-    fetchPending();
-    const interval = setInterval(() => fetchPending(), 15_000);
+    fetchAttestationStatus();
+    const interval = setInterval(() => fetchAttestationStatus(), 15_000);
     return () => clearInterval(interval);
-  }, [isAuthed, fetchPending, toast]);
+  }, [isAuthed, fetchAttestationStatus, toast]);
 
-  const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
+  const attestableCount = attestationStatus?.unattestedCount ?? 0;
+  const showAttestationPanel =
+    Boolean(attestationStatus?.enabled) &&
+    (attestableCount > 0 || attestationStatus?.pendingBatch?.status === "pending");
   const activeOrbits = orbits.filter((o) => !o.paused).length;
   const orbitTitles = useMemo(
     () => Object.fromEntries(orbits.map((o) => [o.id, o.title])),
@@ -115,12 +111,12 @@ export default function Dashboard() {
                   <span className={styles.metricValue}>{alertTotal}</span>
                   <span className={styles.metricLabel}>alert{alertTotal !== 1 ? "s" : ""}</span>
                 </div>
-                {pendingCount > 0 && (
+                {attestableCount > 0 && (
                   <>
                     <div className={styles.metricDivider} aria-hidden />
                     <div className={styles.metric}>
-                      <span className={`${styles.metricValue} ${styles.metricWarn}`}>{pendingCount}</span>
-                      <span className={styles.metricLabel}>pending</span>
+                      <span className={`${styles.metricValue} ${styles.metricWarn}`}>{attestableCount}</span>
+                      <span className={styles.metricLabel}>to attest</span>
                     </div>
                   </>
                 )}
@@ -135,12 +131,26 @@ export default function Dashboard() {
               </div>
             </header>
 
-            {pendingAtts.length > 0 && (
-              <section className={styles.attestBanner}>
-                <h2 className={styles.panelTitle}>Pending attestations</h2>
-                <PendingAttestations pending={pendingAtts} domain={domain} onAttested={fetchPending} />
+            {showAttestationPanel && attestationStatus ? (
+              <section className={styles.panel} aria-labelledby="attest-heading">
+                <div className={styles.panelHead}>
+                  <h2 id="attest-heading" className={styles.panelTitle}>
+                    On-chain attestations
+                  </h2>
+                  <span className={styles.panelMeta}>
+                    {attestationStatus.pendingBatch?.status === "pending"
+                      ? "ready to sign"
+                      : `${attestableCount} in batch`}
+                  </span>
+                </div>
+                <div className={styles.panelBody}>
+                  <PendingAttestations
+                    status={attestationStatus}
+                    onRefresh={fetchAttestationStatus}
+                  />
+                </div>
               </section>
-            )}
+            ) : null}
 
             <div className={styles.columns}>
               <section className={styles.panel} aria-labelledby="orbits-heading">
