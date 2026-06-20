@@ -1,63 +1,126 @@
-.badges {
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.panelTitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+
+.panelMeta {
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+}
+
+.panelActions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
 }
 
-.badge {
+.panelBody {
+  padding: var(--space-4);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.metaRow dt {
+  margin: 0;
   font-size: 0.7rem;
-  padding: 2px var(--space-2);
-  border-radius: 3px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--fg-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  padding-top: 2px;
 }
 
-.active {
-  font-size: 0.7rem;
-  padding: 2px var(--space-2);
-  border-radius: 3px;
-  background: transparent;
-  border: 1px solid var(--success-alpha-40);
-  color: var(--success);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.metaRow dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--fg);
+  word-break: break-word;
 }
 
-.paused {
-  font-size: 0.7rem;
-  padding: 2px var(--space-2);
-  border-radius: 3px;
-  background: transparent;
-  border: 1px solid var(--warning-alpha-40);
-  color: var(--warning);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.criteria {
-  color: var(--fg-muted);
+.metaValue {
   font-size: 0.95rem;
-  line-height: 1.5;
-  margin-bottom: var(--space-3);
-  max-width: 640px;
 }
 
-.listMeta {
-  font-size: 0.85rem;
+.metaMuted {
   color: var(--fg-muted);
-  margin-bottom: var(--space-4);
+}
+
+.metaMono {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.statusActive,
+.statusPaused {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px var(--space-2);
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.statusActive {
+  color: var(--success);
+  border: 1px solid var(--success-alpha-40);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.statusPaused {
+  color: var(--warning);
+  border: 1px solid var(--warning-alpha-40);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .query {
   display: block;
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-4);
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  background: var(--bg-card);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--fg);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
@@ -65,94 +128,120 @@
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--fg-muted);
+  color: var(--fg);
   padding: var(--space-2) var(--space-3);
   border-radius: 4px;
-  font-weight: 500;
-  font-size: 0.875rem;
+  font-weight: 600;
+  font-size: 0.8rem;
   letter-spacing: 0.02em;
+  line-height: 1;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn:hover {
   border-color: var(--fg-muted);
-  color: var(--fg);
 }
 
 .btnDanger {
-  border-color: var(--danger);
+  border-color: var(--danger-alpha-40);
   color: var(--danger);
 }
 
 .btnDanger:hover {
   border-color: var(--danger);
-  color: var(--danger);
-  opacity: 0.8;
-}
-
-.heading {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--fg-muted);
-  margin-bottom: var(--space-3);
 }
 
 .empty {
-  color: var(--fg-muted);
-  padding: var(--space-4);
+  margin: 0;
+  padding: var(--space-4) var(--space-3);
   text-align: center;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
   border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
 }
 
-.alerts {
+.feed {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
 .alert {
-  background: var(--bg-card);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  transition: border-color 0.15s ease;
+}
+
+.alert:hover {
+  border-color: var(--accent-alpha-35);
 }
 
 .alertTop {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-1);
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .score {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 400;
-  color: var(--accent);
+  color: var(--accent-hover);
   letter-spacing: 0.04em;
+  line-height: 1;
 }
 
 .tweetLink {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.tweetLink:hover {
+  color: var(--accent-hover);
+}
+
+.alertTime {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
 }
 
 .summary {
-  margin-bottom: var(--space-2);
-  line-height: 1.5;
+  margin: 0 0 var(--space-2);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--fg);
 }
 
 @media (max-width: 640px) {
-  .btn {
-    flex: 1;
-    text-align: center;
+  .metaRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
   }
 
-  .query {
-    font-size: 0.8rem;
+  .panelActions {
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1;
+  }
+
+  .alertTime {
+    margin-left: 0;
+    width: 100%;
   }
 }

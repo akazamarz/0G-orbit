@@ -215,24 +215,25 @@
 /* ── Linked profile ── */
 .profileCard {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--accent-alpha-35);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--accent-alpha-15);
+  background: var(--bg);
 }
 
 .profileIcon {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--bg);
+  border: 1px solid var(--accent-alpha-35);
+  color: var(--accent);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -264,6 +265,7 @@
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  background: var(--bg);
   cursor: pointer;
   transition: border-color 0.15s ease;
 }

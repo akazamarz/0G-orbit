@@ -82,8 +82,7 @@ CREATE TABLE IF NOT EXISTS pending_attestations (
   attested_at INTEGER
 );
 
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_active_poll ON subscriptions(paused, last_polled_at);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_subscription ON alerts(subscription_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);

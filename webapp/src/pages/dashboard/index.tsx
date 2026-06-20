@@ -150,8 +150,8 @@ export default function Dashboard() {
                     Orbits
                   </h2>
                   {subs.length > 0 && (
-                    <Link href="/subscriptions" className={styles.panelLink}>
-                      Add
+                    <Link href="/subscriptions" className={styles.panelAddBtn}>
+                      + Add
                     </Link>
                   )}
                 </div>

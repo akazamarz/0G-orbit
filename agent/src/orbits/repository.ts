@@ -8,7 +8,8 @@ import {
   upgradeOrbitIntent,
   fallbackUpgradedCriteria,
 } from "../ai/client.js";
-import { stripTimeBounds } from "../x/query.js";
+import { sanitizeSearchQuery, stripTimeBounds } from "../x/query.js";
+import { subscriptionColumnNames } from "../db/migrate.js";
 
 function rowToSub(row: Record<string, unknown>): Subscription {
   return {
@@ -52,7 +53,7 @@ async function resolveGeneratedQuery(
 ): Promise<string> {
   if (source === "list") return "";
   const { query } = await trackToQuery(upgradedCriteria);
-  return stripTimeBounds(query);
+  return sanitizeSearchQuery(stripTimeBounds(query));
 }
 
 function resolveListId(input: SubscriptionInput): string | undefined {
@@ -60,6 +61,64 @@ function resolveListId(input: SubscriptionInput): string | undefined {
   const listId = input.listId ? parseListId(input.listId) : null;
   if (!listId) throw new Error("invalid X list URL or ID");
   return listId;
+}
+
+interface NewSubscriptionRow {
+  id: string;
+  wallet: string;
+  source: TrackSource;
+  title: string;
+  topic: string | null;
+  criteria: string;
+  upgradedCriteria: string;
+  listId: string | null;
+  notifyTelegram: boolean;
+  generatedQuery: string;
+  pollIntervalMs: number;
+  storageRoot: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+function insertSubscriptionRow(row: NewSubscriptionRow): void {
+  const db = getDb();
+  const cols = subscriptionColumnNames(db);
+
+  const data: Record<string, unknown> = {
+    id: row.id,
+    wallet: row.wallet,
+    source: row.source,
+    title: row.title,
+    topic: row.topic,
+    criteria: row.criteria,
+    upgraded_criteria: row.upgradedCriteria,
+    list_id: row.listId,
+    notify_telegram: row.notifyTelegram ? 1 : 0,
+    generated_query: row.generatedQuery,
+    query_version: 1,
+    poll_interval_ms: row.pollIntervalMs,
+    last_polled_at: null,
+    paused: 0,
+    storage_root: row.storageRoot,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+  };
+
+  if (cols.has("intent")) {
+    data.intent = row.topic ?? row.title;
+  }
+  if (cols.has("watch_type")) {
+    data.watch_type = row.source === "list" ? "lists" : "search";
+  }
+  if (cols.has("mode")) {
+    data.mode = row.notifyTelegram ? "live" : "digest";
+  }
+
+  const keys = Object.keys(data).filter((key) => cols.has(key));
+  const values = keys.map((key) => data[key]);
+  const placeholders = keys.map(() => "?").join(", ");
+
+  db.prepare(`INSERT INTO subscriptions (${keys.join(", ")}) VALUES (${placeholders})`).run(...values);
 }
 
 export async function createSubscription(input: SubscriptionInput): Promise<Subscription> {
@@ -77,28 +136,22 @@ export async function createSubscription(input: SubscriptionInput): Promise<Subs
   const id = randomUUID();
   const now = Date.now();
 
-  getDb()
-    .prepare(
-      `INSERT INTO subscriptions
-        (id, wallet, source, title, topic, criteria, upgraded_criteria, list_id, notify_telegram, generated_query, query_version, poll_interval_ms, last_polled_at, paused, storage_root, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, 0, ?, ?, ?)`,
-    )
-    .run(
-      id,
-      input.wallet,
-      input.source,
-      input.title.trim(),
-      topic ?? null,
-      input.criteria.trim(),
-      upgradedCriteria,
-      listId ?? null,
-      input.notifyTelegram ? 1 : 0,
-      generatedQuery,
-      pollIntervalMs,
-      input.storageRoot ?? null,
-      now,
-      now,
-    );
+  insertSubscriptionRow({
+    id,
+    wallet: input.wallet,
+    source: input.source,
+    title: input.title.trim(),
+    topic: topic ?? null,
+    criteria: input.criteria.trim(),
+    upgradedCriteria,
+    listId: listId ?? null,
+    notifyTelegram: input.notifyTelegram,
+    generatedQuery,
+    pollIntervalMs,
+    storageRoot: input.storageRoot ?? null,
+    createdAt: now,
+    updatedAt: now,
+  });
 
   logger.info({ id, wallet: input.wallet, source: input.source, query: generatedQuery, listId }, "subscription created");
   return getSubscription(id)!;

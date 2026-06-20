@@ -37,6 +37,21 @@ export function migrateSubscriptionsTable(db: Database.Database): void {
       WHERE intent IS NOT NULL
     `);
   }
+
+  dropLegacySubscriptionColumns(db);
+}
+
+/** Remove pre-overhaul columns (intent, watch_type, mode) after data backfill. */
+export function dropLegacySubscriptionColumns(db: Database.Database): void {
+  for (const legacy of ["watch_type", "mode", "intent"] as const) {
+    const cols = columnNames(db);
+    if (!cols.has(legacy)) continue;
+    db.exec(`ALTER TABLE subscriptions DROP COLUMN ${legacy}`);
+  }
+}
+
+export function subscriptionColumnNames(db: Database.Database): Set<string> {
+  return columnNames(db);
 }
 
 /** Add topic column for custom orbits (search subject separate from display title). */
