@@ -1,27 +1,49 @@
-.pageHeader {
-  padding-bottom: var(--space-4);
-  margin-bottom: var(--space-5);
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Panel (matches dashboard / subscriptions) ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
-.pageTitle {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  margin-bottom: var(--space-1);
-}
-
-.pageSubtitle {
+.panelTitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--fg-muted);
-  font-size: 0.85rem;
 }
 
+.panelBody {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Progress steps ── */
 .steps {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-bottom: var(--space-5);
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .step {
@@ -29,149 +51,181 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--fg-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  letter-spacing: 0.03em;
 }
 
 .stepActive {
   color: var(--fg);
 }
 
+.stepActive .stepNum {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .stepDone {
-  color: var(--success);
+  color: var(--accent-hover);
 }
 
 .stepNum {
-  width: 22px;
-  height: 22px;
-  border-radius: 3px;
-  border: 1.5px solid currentColor;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .stepDone .stepNum {
-  background: var(--success);
-  border-color: var(--success);
-  color: #000;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.stepLabel {
+  letter-spacing: 0.02em;
 }
 
 .stepLine {
-  width: 40px;
+  flex: 1;
+  min-width: 24px;
+  max-width: 48px;
   height: 1px;
   background: var(--border);
-  margin: 0 var(--space-2);
 }
 
-.card {
-  max-width: 480px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 3px solid #229ed9;
-  border-radius: 4px;
-  padding: var(--space-5);
-}
-
-.title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  margin-bottom: var(--space-3);
-}
-
+/* ── Content ── */
 .desc {
   color: var(--fg-muted);
-  margin-bottom: var(--space-4);
   line-height: 1.55;
   font-size: 0.9rem;
+  max-width: 40rem;
 }
 
-.btn {
-  background: #229ed9;
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  background: var(--accent);
   color: var(--on-accent);
-  border: 1px solid #229ed9;
-  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--accent);
+  padding: var(--space-2) var(--space-5);
   border-radius: 4px;
   font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.03em;
-  width: 100%;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.btn:hover:not(:disabled) {
-  background: #1d8bc4;
-  border-color: #1d8bc4;
+.btnPrimary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--on-accent);
 }
 
-.btn:disabled {
-  opacity: 0.6;
+.btnPrimary:disabled {
+  opacity: 0.5;
   cursor: wait;
 }
 
-.linkBox {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
+.linkResult {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
 
-.hint {
+.linkHint {
   color: var(--fg-muted);
   font-size: 0.85rem;
-  margin-bottom: var(--space-3);
+  line-height: 1.5;
+  max-width: 36rem;
 }
 
-.deeplink {
-  display: inline-block;
-  background: #229ed9;
-  color: var(--on-accent);
-  border: 1px solid #229ed9;
-  padding: var(--space-3) var(--space-5);
-  border-radius: 4px;
+.linkHint strong {
+  color: var(--fg);
   font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.deeplink:hover {
-  background: #1d8bc4;
-  border-color: #1d8bc4;
-  color: var(--on-accent);
+/* ── How it works ── */
+.howList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
 }
 
-.secondary {
-  display: inline-block;
-  margin-top: var(--space-4);
-  color: var(--fg-muted);
+.howItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
   font-size: 0.9rem;
-}
-
-.secondary:hover {
-  color: var(--accent);
-}
-
-.muted {
   color: var(--fg-muted);
+  line-height: 1.45;
+}
+
+.howNum {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--accent);
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnGhost:hover {
+  border-color: var(--fg-muted);
+  color: var(--fg);
 }
 
 @media (max-width: 640px) {
-  .pageTitle {
-    font-size: 1.35rem;
+  .steps {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .card {
-    max-width: 100%;
-    padding: var(--space-4);
+  .stepLine {
+    display: none;
   }
 
-  .deeplink {
-    display: block;
+  .btnPrimary,
+  .btnGhost {
+    width: 100%;
+    align-self: stretch;
     text-align: center;
   }
 }

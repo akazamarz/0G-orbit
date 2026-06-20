@@ -206,7 +206,7 @@ export default function Dashboard() {
                       <div className={styles.panelEmptyText}>
                         <p className={styles.panelEmptyTitle}>Quiet for now</p>
                         <p className={styles.panelEmptyDesc}>
-                          High-signal posts show up here when an orbit matches. Telegram is optional.
+                          Posts that pass your orbit criteria appear here. Telegram is optional.
                         </p>
                       </div>
                       <Link href="/connect" className={styles.panelEmptyAction}>
