@@ -31,18 +31,18 @@ export function welcomeMessage(): string {
   return [
     "<b>Welcome to Orbit</b>",
     "",
-    "Orbit watches X for posts that fit your criteria and sends you signals here when something matters.",
+    "Set up orbits in the app to watch X lists or topics. Matching posts land on your dashboard. Turn on Telegram alerts to get them here too.",
     "",
-    "<b>To get started</b>",
-    "1. Open the Orbit app and connect your wallet",
-    "2. Go to <b>Alerts</b> and tap <b>Generate Telegram link</b>",
-    "3. Open the link here and tap <b>Start</b>",
+    "<b>Link this chat</b>",
+    "1. Open Orbit and connect your wallet",
+    "2. Alerts → Generate Telegram link",
+    "3. Open the link here and tap Start",
     "",
     "<b>Commands</b>",
-    "/orbits — list your orbits",
-    "/pause — pick an orbit to pause",
-    "/resume — pick an orbit to resume",
-    "/help — show this guide again",
+    "/orbits — your orbits",
+    "/pause — stop polling",
+    "/resume — start polling",
+    "/help — full guide",
   ].join("\n");
 }
 
@@ -96,22 +96,30 @@ export interface OrbitRow {
   notify_telegram: number;
 }
 
+function orbitStatusLine(paused: number, notifyTelegram: number): string {
+  const polling = paused ? "Paused" : "Active";
+  const delivery = notifyTelegram ? "Telegram alerts" : "Dashboard only";
+  return `${polling} · ${delivery}`;
+}
+
+function formatOrbitBlock(index: number, title: string, paused: number, notifyTelegram: number): string {
+  const name = escapeHtml(title.trim() || "Untitled orbit");
+  return `${index}. <b>${name}</b>\n${orbitStatusLine(paused, notifyTelegram)}`;
+}
+
 export function orbitsListMessage(orbits: OrbitRow[]): string {
-  const lines = orbits.map((o) => {
-    const status = o.paused ? "⏸ Paused" : "🟢 Active";
-    const delivery = o.notify_telegram ? "Telegram + feed" : "Feed only";
-    const name = escapeHtml(o.title.trim() || "Untitled orbit");
-    return `${status} · <b>${name}</b>\n   ${delivery}`;
-  });
+  const count = orbits.length;
+  const header = count === 1 ? "<b>Your orbit</b>" : `<b>Your orbits</b> (${count})`;
+  const blocks = orbits.map((o, i) => formatOrbitBlock(i + 1, o.title, o.paused, o.notify_telegram));
 
   return [
-    `<b>Your orbits</b> (${orbits.length})`,
+    header,
     "",
-    lines.join("\n\n"),
+    blocks.join("\n\n"),
     "",
-    "<b>Manage from chat</b>",
-    "/pause — pick an orbit to stop polling",
-    "/resume — pick a paused orbit to start again",
+    "<b>Manage</b>",
+    "/pause — stop polling",
+    "/resume — start polling",
   ].join("\n");
 }
 
@@ -125,19 +133,35 @@ export function noOrbitsMessage(): string {
   ].join("\n");
 }
 
-export function pausePickerMessage(): string {
+export function pausePickerMessage(activeCount = 1): string {
+  const countLine =
+    activeCount === 1
+      ? "You have <b>1 active orbit</b> checking X."
+      : `You have <b>${activeCount} active orbits</b> checking X.`;
   return [
     "<b>Pause an orbit</b>",
     "",
-    "Tap the orbit you want to stop polling:",
+    countLine,
+    "",
+    "Pausing stops new checks and alerts. Your dashboard stays as it is.",
+    "",
+    "Tap an orbit below to pause it.",
   ].join("\n");
 }
 
-export function resumePickerMessage(): string {
+export function resumePickerMessage(pausedCount = 1): string {
+  const countLine =
+    pausedCount === 1
+      ? "You have <b>1 paused orbit</b>."
+      : `You have <b>${pausedCount} paused orbits</b>.`;
   return [
     "<b>Resume an orbit</b>",
     "",
-    "Tap a paused orbit to start polling again:",
+    countLine,
+    "",
+    "Resuming turns polling back on. New matches go to your dashboard and here if Telegram alerts are on.",
+    "",
+    "Tap an orbit below to resume it.",
   ].join("\n");
 }
 
@@ -162,22 +186,24 @@ export function noPausedOrbitsMessage(): string {
 }
 
 export function pauseSuccessMessage(title: string): string {
+  const name = escapeHtml(title);
   return [
-    "<b>Orbit paused</b> ⏸",
+    "<b>Paused</b>",
     "",
-    `<b>${escapeHtml(title)}</b> will stop polling until you resume it.`,
+    name,
+    "Polling stopped. Your dashboard is unchanged.",
     "",
-    "Alerts already on your dashboard are unchanged. Resume anytime with /resume.",
+    "/resume when you want to start again.",
   ].join("\n");
 }
 
 export function resumeSuccessMessage(title: string): string {
+  const name = escapeHtml(title);
   return [
-    "<b>Orbit resumed</b> ▶️",
+    "<b>Resumed</b>",
     "",
-    `<b>${escapeHtml(title)}</b> is polling again.`,
-    "",
-    "If push is enabled, new matches will be delivered here and on your dashboard.",
+    name,
+    "Polling again. New matches go to your dashboard and here if Telegram alerts are on.",
   ].join("\n");
 }
 
@@ -213,12 +239,11 @@ export function formatAlertMessage(alert: Alert, orbitTitle?: string): string {
   const title = escapeHtml(orbitTitle?.trim() || "Untitled orbit");
   const summary = escapeHtml(alert.summary);
   const url = escapeHtml(alert.tweet.url);
+  const handle = alert.tweet.author.replace(/^@/, "").trim();
+  const authorLine = handle ? `@${escapeHtml(handle)}` : null;
 
-  return [
-    `🛰 <b>${title}</b>`,
-    "",
-    summary,
-    "",
-    `<a href="${url}">View on X</a>`,
-  ].join("\n");
+  const lines = [`🔔 <b>${title}</b>`, ""];
+  if (authorLine) lines.push(authorLine, "");
+  lines.push(summary, "", `<a href="${url}">View on X</a>`);
+  return lines.join("\n");
 }

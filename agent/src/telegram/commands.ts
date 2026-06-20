@@ -118,7 +118,7 @@ export function registerCommands(bot: Bot): void {
     if (!linked) return ctx.reply(notLinkedMessage(), HTML_REPLY);
     const active = listOrbits(linked.wallet).filter((o) => !o.paused);
     if (active.length === 0) return ctx.reply(noActiveOrbitsToPauseMessage(), HTML_REPLY);
-    await ctx.reply(pausePickerMessage(), {
+    await ctx.reply(pausePickerMessage(active.length), {
       ...HTML_REPLY,
       reply_markup: orbitPickerKeyboard(ORBIT_ACTION.Pause, active),
     });
@@ -129,7 +129,7 @@ export function registerCommands(bot: Bot): void {
     if (!linked) return ctx.reply(notLinkedMessage(), HTML_REPLY);
     const paused = listOrbits(linked.wallet).filter((o) => o.paused);
     if (paused.length === 0) return ctx.reply(noPausedOrbitsMessage(), HTML_REPLY);
-    await ctx.reply(resumePickerMessage(), {
+    await ctx.reply(resumePickerMessage(paused.length), {
       ...HTML_REPLY,
       reply_markup: orbitPickerKeyboard(ORBIT_ACTION.Resume, paused),
     });
