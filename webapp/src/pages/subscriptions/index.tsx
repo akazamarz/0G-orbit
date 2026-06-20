@@ -7,7 +7,6 @@ import { Loading } from "@/components/Loading";
 import { WalletRequiredState } from "@/components/WalletRequiredState";
 import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
-import { ORBIT_TEMPLATES } from "@/lib/templates";
 import styles from "./index.module.css";
 import type { Subscription, TrackSource } from "@orbit/shared";
 
@@ -20,14 +19,6 @@ export default function NewSubscription() {
   const [notifyTelegram, setNotifyTelegram] = useState(true);
   const [created, setCreated] = useState<Subscription | null>(null);
   const [busy, setBusy] = useState(false);
-
-  function applyTemplate(templateId: string) {
-    const t = ORBIT_TEMPLATES.find((x) => x.id === templateId);
-    if (!t) return;
-    setSource(t.source);
-    setTitle(t.title);
-    setCriteria(t.criteria);
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,124 +66,131 @@ export default function NewSubscription() {
         ) : !isAuthed ? (
           <WalletRequiredState />
         ) : (
-          <>
-            <p className={styles.templatesLabel}>Quick start</p>
-            <div className={styles.templates}>
-              {ORBIT_TEMPLATES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={styles.template}
-                  onClick={() => applyTemplate(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
+          <div className={styles.page}>
             <form className={styles.form} onSubmit={submit}>
-              <fieldset className={styles.field}>
-                <legend className={styles.label}>Source</legend>
-                <div className={styles.sourceRow}>
-                  <button
-                    type="button"
-                    className={source === "list" ? styles.sourceActive : styles.source}
-                    onClick={() => setSource("list")}
-                    aria-pressed={source === "list"}
-                  >
-                    <span className={styles.sourceTitle}>X list</span>
-                    <span className={styles.sourceHint}>Poll a curated list timeline</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={source === "custom" ? styles.sourceActive : styles.source}
-                    onClick={() => setSource("custom")}
-                    aria-pressed={source === "custom"}
-                  >
-                    <span className={styles.sourceTitle}>Custom topic</span>
-                    <span className={styles.sourceHint}>AI-built search across X</span>
+              <section className={styles.panel} aria-labelledby="source-heading">
+                <div className={styles.panelHead}>
+                  <h2 id="source-heading" className={styles.panelTitle}>
+                    Source
+                  </h2>
+                </div>
+                <div className={styles.panelBody}>
+                  <div className={styles.sourceRow}>
+                    <button
+                      type="button"
+                      className={source === "list" ? styles.sourceActive : styles.source}
+                      onClick={() => setSource("list")}
+                      aria-pressed={source === "list"}
+                    >
+                      <span className={styles.sourceTitle}>X list</span>
+                      <span className={styles.sourceHint}>Poll a curated list timeline</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={source === "custom" ? styles.sourceActive : styles.source}
+                      onClick={() => setSource("custom")}
+                      aria-pressed={source === "custom"}
+                    >
+                      <span className={styles.sourceTitle}>Custom topic</span>
+                      <span className={styles.sourceHint}>AI-built search across X</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section className={styles.panel} aria-labelledby="details-heading">
+                <div className={styles.panelHead}>
+                  <h2 id="details-heading" className={styles.panelTitle}>
+                    Details
+                  </h2>
+                </div>
+                <div className={styles.panelBody}>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="title">
+                      {source === "list" ? "List URL or ID" : "Topic"}
+                    </label>
+                    <input
+                      id="title"
+                      className={styles.input}
+                      placeholder={
+                        source === "list"
+                          ? "https://x.com/i/lists/1234567890"
+                          : "e.g. New AI model releases"
+                      }
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="criteria">
+                      Criteria
+                    </label>
+                    <textarea
+                      id="criteria"
+                      className={styles.textarea}
+                      placeholder="What should count in your feed and alerts? Be specific about signals, accounts, and exclusions."
+                      value={criteria}
+                      onChange={(e) => setCriteria(e.target.value)}
+                      required
+                      rows={4}
+                    />
+                  </div>
+
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      className={styles.toggleInput}
+                      checked={notifyTelegram}
+                      onChange={(e) => setNotifyTelegram(e.target.checked)}
+                    />
+                    <div className={styles.toggleRow}>
+                      <span className={styles.toggleSwitch} aria-hidden />
+                      <span className={styles.toggleTitle}>Push to Telegram</span>
+                    </div>
+                    <span className={styles.toggleHint}>
+                      {notifyTelegram
+                        ? "Matching posts also go to Telegram when linked"
+                        : "Feed only — alerts appear on your dashboard"}
+                    </span>
+                  </label>
+
+                  <button className={styles.submit} type="submit" disabled={busy}>
+                    {busy ? "Creating…" : "Create orbit"}
                   </button>
                 </div>
-              </fieldset>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="title">
-                  {source === "list" ? "List URL or ID" : "Topic"}
-                </label>
-                <input
-                  id="title"
-                  className={styles.input}
-                  placeholder={
-                    source === "list"
-                      ? "https://x.com/i/lists/1234567890"
-                      : "e.g. New AI model releases"
-                  }
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="criteria">
-                  Criteria
-                </label>
-                <textarea
-                  id="criteria"
-                  className={styles.textarea}
-                  placeholder="What should count in your feed and alerts? Be specific about signals, accounts, and exclusions."
-                  value={criteria}
-                  onChange={(e) => setCriteria(e.target.value)}
-                  required
-                  rows={4}
-                />
-              </div>
-
-              <label className={styles.toggle}>
-                <input
-                  type="checkbox"
-                  checked={notifyTelegram}
-                  onChange={(e) => setNotifyTelegram(e.target.checked)}
-                />
-                <span className={styles.toggleText}>
-                  <span className={styles.toggleTitle}>Push to Telegram</span>
-                  <span className={styles.toggleHint}>
-                    {notifyTelegram
-                      ? "Matching posts also go to Telegram when linked"
-                      : "Feed only - alerts appear on your dashboard"}
-                  </span>
-                </span>
-              </label>
-
-              <button className={styles.submit} type="submit" disabled={busy}>
-                {busy ? "Creating…" : "Create orbit"}
-              </button>
+              </section>
             </form>
 
             {created && (
-              <div className={styles.success}>
-                <p className={styles.successTitle}>Orbit created</p>
-                {created.source === "custom" && created.generatedQuery ? (
-                  <>
-                    <p className={styles.queryLabel}>AI-generated query:</p>
-                    <code className={styles.query}>{created.generatedQuery}</code>
-                  </>
-                ) : (
-                  <p className={styles.queryLabel}>Polling list {created.listId}</p>
-                )}
-                <div className={styles.successActions}>
-                  <Link href={`/subscriptions/${created.id}`} className={styles.linkBtn}>
-                    View orbit
-                  </Link>
-                  {created.notifyTelegram && (
-                    <Link href="/connect" className={styles.linkSecondary}>
-                      Connect Telegram
-                    </Link>
-                  )}
+              <section className={styles.panel} aria-label="Orbit created">
+                <div className={styles.panelHead}>
+                  <h2 className={styles.panelTitle}>Orbit created</h2>
                 </div>
-              </div>
+                <div className={styles.panelBody}>
+                  {created.source === "custom" && created.generatedQuery ? (
+                    <>
+                      <p className={styles.queryLabel}>AI-generated query</p>
+                      <code className={styles.query}>{created.generatedQuery}</code>
+                    </>
+                  ) : (
+                    <p className={styles.queryLabel}>Polling list {created.listId}</p>
+                  )}
+                  <div className={styles.successActions}>
+                    <Link href={`/subscriptions/${created.id}`} className={styles.btnPrimary}>
+                      View orbit
+                    </Link>
+                    {created.notifyTelegram && (
+                      <Link href="/connect" className={styles.btnGhost}>
+                        Connect Telegram
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </section>
             )}
-          </>
+          </div>
         )}
       </AppShell>
     </>
