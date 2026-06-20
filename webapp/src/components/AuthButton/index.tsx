@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { ZG_CHAIN } from "@orbit/shared";
 import { useSession } from "@/hooks/useSession";
 import { signInWithWallet } from "@/lib/siwe-client";
@@ -13,10 +13,11 @@ interface Props {
 
 export function AuthButton({ onAuthed }: Props) {
   const { address, isConnected, chain } = useAccount();
+  const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
-  const [signInDeclined, setSignInDeclined] = useState(false);
+  const [signing, setSigning] = useState(false);
   const wasConnected = useRef(false);
   const signingRef = useRef(false);
 
@@ -29,7 +30,7 @@ export function AuthButton({ onAuthed }: Props) {
   const handleSignIn = useCallback(async () => {
     if (!address || signingRef.current || wrongChain) return false;
     signingRef.current = true;
-    setSignInDeclined(false);
+    setSigning(true);
     try {
       await signInWithWallet(address, (args) => signMessageAsync(args));
       await refresh();
@@ -37,25 +38,20 @@ export function AuthButton({ onAuthed }: Props) {
       return true;
     } catch (err) {
       const msg = (err as Error).message;
-      if (msg.toLowerCase().includes("rejected")) {
-        setSignInDeclined(true);
-      } else {
+      if (!msg.toLowerCase().includes("rejected")) {
         toast(msg, "error");
       }
       return false;
     } finally {
       signingRef.current = false;
+      setSigning(false);
     }
   }, [address, wrongChain, signMessageAsync, refresh, onAuthed, toast]);
 
-  useEffect(() => {
-    if (!needsSignIn || signInDeclined || wrongChain) return;
-    void handleSignIn();
-  }, [needsSignIn, signInDeclined, wrongChain, handleSignIn]);
-
-  useEffect(() => {
-    setSignInDeclined(false);
-  }, [address]);
+  const handleDisconnect = useCallback(async () => {
+    await signOut();
+    disconnect();
+  }, [signOut, disconnect]);
 
   useEffect(() => {
     if (wasConnected.current && !isConnected) {
@@ -70,19 +66,46 @@ export function AuthButton({ onAuthed }: Props) {
         <span className={styles.chainWarn}>Switch to {ZG_CHAIN.name}</span>
       )}
 
-      {signInDeclined && needsSignIn && (
-        <button type="button" className={styles.retry} onClick={() => void handleSignIn()}>
-          Retry sign-in
-        </button>
-      )}
+      <ConnectButton.Custom>
+        {({ openConnectModal, mounted }) => {
+          if (!mounted) return null;
 
-      <div className={styles.connect}>
-        <ConnectButton
-          showBalance={false}
-          chainStatus={wrongChain ? "icon" : "none"}
-          accountStatus={sessionMatches ? "avatar" : "address"}
-        />
-      </div>
+          if (!isConnected) {
+            return (
+              <button type="button" className={styles.btn} onClick={openConnectModal}>
+                Connect Wallet
+              </button>
+            );
+          }
+
+          if (sessionLoading) {
+            return (
+              <button type="button" className={styles.btn} disabled>
+                …
+              </button>
+            );
+          }
+
+          if (needsSignIn) {
+            return (
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => void handleSignIn()}
+                disabled={signing || wrongChain}
+              >
+                {signing ? "Signing…" : "Sign"}
+              </button>
+            );
+          }
+
+          return (
+            <button type="button" className={styles.btn} onClick={() => void handleDisconnect()}>
+              Disconnect
+            </button>
+          );
+        }}
+      </ConnectButton.Custom>
     </div>
   );
 }

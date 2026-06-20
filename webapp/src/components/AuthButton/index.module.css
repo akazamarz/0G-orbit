@@ -11,54 +11,31 @@
   font-weight: 600;
 }
 
-.retry {
-  background: var(--accent);
-  color: #fff;
-  border: none;
+/* Matches home page "Launch app" (.topCta) */
+.btn {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-weight: 600;
+  border-radius: 4px;
+  font-weight: 500;
   font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  height: 32px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.retry:hover {
-  background: var(--accent-hover);
+.btn:hover:not(:disabled) {
+  border-color: var(--fg-muted);
+  color: var(--fg);
 }
 
-/* Compact header wallet control — size the container, not each inner segment */
-.connect :global([data-rk]) {
-  display: inline-flex;
-}
-
-.connect :global([data-rk] > div) {
-  height: 32px !important;
-  min-height: 32px !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-}
-
-.connect :global([data-rk] > div button) {
-  height: 100% !important;
-  min-height: unset !important;
-  padding: 0 8px !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-  line-height: 1 !important;
-  gap: 4px !important;
-}
-
-/* Disconnected: single connect button without inner wrapper */
-.connect :global([data-rk] > button) {
-  height: 32px !important;
-  min-height: 32px !important;
-  padding: 0 10px !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-}
-
-.connect :global([data-rk] img) {
-  width: 18px !important;
-  height: 18px !important;
+.btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 @media (max-width: 768px) {
@@ -72,8 +49,8 @@
     display: none;
   }
 
-  .retry {
-    padding: var(--space-1) var(--space-2);
-    font-size: 0.75rem;
+  .btn {
+    font-size: 0.8rem;
+    padding: var(--space-2);
   }
 }
