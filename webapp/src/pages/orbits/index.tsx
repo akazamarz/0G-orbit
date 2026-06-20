@@ -11,7 +11,7 @@ import { useSession } from "@/hooks/useSession";
 import { useToast } from "@/components/Toast";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import styles from "./index.module.css";
-import type { Subscription, TrackSource } from "@orbit/shared";
+import type { Orbit, TrackSource } from "@orbit/shared";
 
 const EMPTY_FORM = {
   source: "custom" as TrackSource,
@@ -31,15 +31,15 @@ export default function OrbitPage() {
   const editId = typeof router.query.id === "string" ? router.query.id : null;
   const isEdit = Boolean(editId);
 
-  const [subs, setSubs] = useState<Subscription[]>([]);
-  const [subsLoading, setSubsLoading] = useState(true);
+  const [orbits, setOrbits] = useState<Orbit[]>([]);
+  const [orbitsLoading, setOrbitsLoading] = useState(true);
   const [source, setSource] = useState<TrackSource>(EMPTY_FORM.source);
   const [orbitName, setOrbitName] = useState(EMPTY_FORM.orbitName);
   const [topic, setTopic] = useState(EMPTY_FORM.topic);
   const [listInput, setListInput] = useState(EMPTY_FORM.listInput);
   const [criteria, setCriteria] = useState(EMPTY_FORM.criteria);
   const [notifyTelegram, setNotifyTelegram] = useState(EMPTY_FORM.notifyTelegram);
-  const [saved, setSaved] = useState<Subscription | null>(null);
+  const [saved, setSaved] = useState<Orbit | null>(null);
   const [busy, setBusy] = useState(false);
 
   const resetForm = useCallback(() => {
@@ -52,49 +52,49 @@ export default function OrbitPage() {
     setSaved(null);
   }, []);
 
-  const applySubscription = useCallback((sub: Subscription) => {
-    setSource(sub.source);
-    setOrbitName(sub.title);
-    setTopic(sub.topic ?? "");
-    setListInput(sub.listId ?? "");
-    setCriteria(sub.criteria);
-    setNotifyTelegram(sub.notifyTelegram);
-    setSaved(sub);
+  const applyOrbit = useCallback((orbit: Orbit) => {
+    setSource(orbit.source);
+    setOrbitName(orbit.title);
+    setTopic(orbit.topic ?? "");
+    setListInput(orbit.listId ?? "");
+    setCriteria(orbit.criteria);
+    setNotifyTelegram(orbit.notifyTelegram);
+    setSaved(orbit);
   }, []);
 
-  const loadSubs = useCallback(async () => {
+  const loadOrbits = useCallback(async () => {
     const res = await fetch("/api/orbits");
     const data = await res.json();
     if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed to load orbits");
-    return Array.isArray(data) ? (data as Subscription[]) : [];
+    return Array.isArray(data) ? (data as Orbit[]) : [];
   }, []);
 
   useEffect(() => {
     if (!isAuthed) {
-      setSubsLoading(false);
+      setOrbitsLoading(false);
       return;
     }
-    setSubsLoading(true);
-    void loadSubs()
-      .then(setSubs)
+    setOrbitsLoading(true);
+    void loadOrbits()
+      .then(setOrbits)
       .catch((err) => toast((err as Error).message, "error"))
-      .finally(() => setSubsLoading(false));
-  }, [isAuthed, loadSubs, toast]);
+      .finally(() => setOrbitsLoading(false));
+  }, [isAuthed, loadOrbits, toast]);
 
   useEffect(() => {
-    if (!router.isReady || subsLoading) return;
+    if (!router.isReady || orbitsLoading) return;
     if (editId) {
-      const sub = subs.find((s) => s.id === editId);
-      if (sub) {
-        applySubscription(sub);
-      } else if (subs.length > 0 || !subsLoading) {
+      const orbit = orbits.find((o) => o.id === editId);
+      if (orbit) {
+        applyOrbit(orbit);
+      } else if (orbits.length > 0 || !orbitsLoading) {
         toast("Orbit not found", "error");
         void router.replace("/orbits");
       }
     } else {
       resetForm();
     }
-  }, [editId, subs, subsLoading, router, applySubscription, resetForm, toast]);
+  }, [editId, orbits, orbitsLoading, router, applyOrbit, resetForm, toast]);
 
   function selectOrbit(id: string | null) {
     if (id) {
@@ -128,9 +128,9 @@ export default function OrbitPage() {
           const body = (await res.json()) as { error?: string };
           throw new Error(body.error ?? "Failed to update orbit");
         }
-        const sub = (await res.json()) as Subscription;
-        setSaved(sub);
-        setSubs((prev) => prev.map((s) => (s.id === sub.id ? sub : s)));
+        const orbit = (await res.json()) as Orbit;
+        setSaved(orbit);
+        setOrbits((prev) => prev.map((o) => (o.id === orbit.id ? orbit : o)));
         toast("Orbit updated", "success");
       } else {
         const res = await fetch("/api/orbits", {
@@ -149,10 +149,10 @@ export default function OrbitPage() {
           const body = (await res.json()) as { error?: string };
           throw new Error(body.error ?? "Failed to create orbit");
         }
-        const sub = (await res.json()) as Subscription;
-        setSubs((prev) => [...prev, sub]);
+        const orbit = (await res.json()) as Orbit;
+        setOrbits((prev) => [...prev, orbit]);
         toast("Orbit created", "success");
-        void router.push(`/orbits?id=${sub.id}`, undefined, { shallow: true });
+        void router.push(`/orbits?id=${orbit.id}`, undefined, { shallow: true });
       }
     } catch (err) {
       toast((err as Error).message, "error");
@@ -172,10 +172,10 @@ export default function OrbitPage() {
       toast("Failed to update orbit", "error");
       return;
     }
-    const sub = (await res.json()) as Subscription;
-    setSaved(sub);
-    setSubs((prev) => prev.map((s) => (s.id === sub.id ? sub : s)));
-    toast(sub.paused ? "Orbit paused" : "Orbit resumed", "success");
+    const orbit = (await res.json()) as Orbit;
+    setSaved(orbit);
+    setOrbits((prev) => prev.map((o) => (o.id === orbit.id ? orbit : o)));
+    toast(orbit.paused ? "Orbit paused" : "Orbit resumed", "success");
   }
 
   async function remove() {
@@ -191,7 +191,7 @@ export default function OrbitPage() {
     try {
       const res = await fetch(`/api/orbits/${saved.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete orbit");
-      setSubs((prev) => prev.filter((s) => s.id !== saved.id));
+      setOrbits((prev) => prev.filter((o) => o.id !== saved.id));
       toast("Orbit deleted", "info");
       void router.push("/orbits");
     } catch (err) {
@@ -209,7 +209,7 @@ export default function OrbitPage() {
         <title>{isEdit && saved ? `${saved.title.slice(0, 40)} - Orbit` : "Orbit - Orbit"}</title>
       </Head>
       <AppShell title={shellTitle}>
-        {loading || subsLoading ? (
+        {loading || orbitsLoading ? (
           <Loading />
         ) : !isAuthed ? (
           <WalletRequiredState />
@@ -230,15 +230,15 @@ export default function OrbitPage() {
                   >
                     New orbit
                   </button>
-                  {subs.map((s) => (
+                  {orbits.map((o) => (
                     <button
-                      key={s.id}
+                      key={o.id}
                       type="button"
-                      className={editId === s.id ? styles.pickerActive : styles.pickerItem}
-                      onClick={() => selectOrbit(s.id)}
+                      className={editId === o.id ? styles.pickerActive : styles.pickerItem}
+                      onClick={() => selectOrbit(o.id)}
                     >
-                      {s.title}
-                      {s.paused ? <span className={styles.pickerPaused}>Paused</span> : null}
+                      {o.title}
+                      {o.paused ? <span className={styles.pickerPaused}>Paused</span> : null}
                     </button>
                   ))}
                 </div>
@@ -416,7 +416,7 @@ export default function OrbitPage() {
                   </Link>
                 </div>
                 <div className={styles.panelBody}>
-                  <OrbitDetailsMeta subscription={saved} />
+                  <OrbitDetailsMeta orbit={saved} />
                 </div>
               </section>
             ) : null}

@@ -8,11 +8,11 @@ import { evaluateTweetBatch } from "../ai/client.js";
 import { sendAlert } from "../telegram/notify.js";
 import { getWalletTelegram } from "../telegram/wallet.js";
 import {
-  getSubscription,
-  markSubscriptionPolled,
+  getOrbit,
+  markOrbitPolled,
   getUpgradedCriteria,
 } from "./repository.js";
-import type { Alert, Subscription, Tweet } from "@orbit/shared";
+import type { Alert, Orbit, Tweet } from "@orbit/shared";
 
 const SCORE_THRESHOLD = 60;
 
@@ -24,35 +24,35 @@ function chunk<T>(items: T[], size: number): T[][] {
   return batches;
 }
 
-function pollSinceTimestamp(sub: Subscription, globalIntervalMs: number): Date {
+function pollSinceTimestamp(orbit: Orbit, globalIntervalMs: number): Date {
   const fallbackMs = globalIntervalMs + 60_000;
-  const sinceMs = sub.lastPolledAt ?? sub.createdAt ?? Date.now() - fallbackMs;
+  const sinceMs = orbit.lastPolledAt ?? orbit.createdAt ?? Date.now() - fallbackMs;
   return new Date(sinceMs);
 }
 
-async function fetchTweets(sub: Subscription, globalIntervalMs: number): Promise<Tweet[]> {
-  if (sub.source === "list") {
-    if (!sub.listId) {
-      logger.warn({ id: sub.id }, "list orbit missing listId");
+async function fetchTweets(orbit: Orbit, globalIntervalMs: number): Promise<Tweet[]> {
+  if (orbit.source === "list") {
+    if (!orbit.listId) {
+      logger.warn({ id: orbit.id }, "list orbit missing listId");
       return [];
     }
-    return listTimelineAllPages(sub.listId, 1);
+    return listTimelineAllPages(orbit.listId, 1);
   }
 
-  if (!sub.generatedQuery) {
-    logger.warn({ id: sub.id }, "custom orbit missing generated query");
+  if (!orbit.generatedQuery) {
+    logger.warn({ id: orbit.id }, "custom orbit missing generated query");
     return [];
   }
 
-  const since = pollSinceTimestamp(sub, globalIntervalMs);
-  const pollQuery = buildPollSearchQuery(sub.generatedQuery, since);
-  logger.debug({ id: sub.id, pollQuery }, "x search poll query");
+  const since = pollSinceTimestamp(orbit, globalIntervalMs);
+  const pollQuery = buildPollSearchQuery(orbit.generatedQuery, since);
+  logger.debug({ id: orbit.id, pollQuery }, "x search poll query");
 
   return searchAllPages(pollQuery, 1);
 }
 
-export async function runSubscription(subscriptionId: string): Promise<void> {
-  const fresh = getSubscription(subscriptionId);
+export async function runOrbit(orbitId: string): Promise<void> {
+  const fresh = getOrbit(orbitId);
   if (!fresh || fresh.paused) return;
 
   const config = loadConfig();
@@ -78,14 +78,14 @@ export async function runSubscription(subscriptionId: string): Promise<void> {
   try {
     tweets = await fetchTweets(fresh, config.GLOBAL_POLL_INTERVAL_MS);
   } catch (err) {
-    logger.error({ err, subId: fresh.id }, "fetch tweets failed");
+    logger.error({ err, orbitId: fresh.id }, "fetch tweets failed");
     return;
   }
 
   const unseen = filterUnseen(fresh.id, tweets);
   if (unseen.length === 0) {
     logger.debug({ id: fresh.id }, "no new tweets");
-    markSubscriptionPolled(fresh.id, polledAt);
+    markOrbitPolled(fresh.id, polledAt);
     return;
   }
 
@@ -118,7 +118,7 @@ export async function runSubscription(subscriptionId: string): Promise<void> {
 
         const alert: Alert = {
           id: randomUUID(),
-          subscriptionId: fresh.id,
+          orbitId: fresh.id,
           wallet: fresh.wallet,
           tweet,
           summary: evaluation.summary!,
@@ -140,23 +140,23 @@ export async function runSubscription(subscriptionId: string): Promise<void> {
         );
       }
     } catch (err) {
-      logger.error({ err, subId: fresh.id, batchSize: batch.length }, "batch evaluation failed");
+      logger.error({ err, orbitId: fresh.id, batchSize: batch.length }, "batch evaluation failed");
     }
   }
 
-  markSubscriptionPolled(fresh.id, polledAt);
+  markOrbitPolled(fresh.id, polledAt);
 }
 
 function persistAlert(alert: Alert): void {
   getDb()
     .prepare(
       `INSERT INTO alerts
-        (id, subscription_id, wallet, tweet_id, tweet_json, summary, score, sent_to_telegram, created_at)
+        (id, orbit_id, wallet, tweet_id, tweet_json, summary, score, sent_to_telegram, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
     )
     .run(
       alert.id,
-      alert.subscriptionId,
+      alert.orbitId,
       alert.wallet,
       alert.tweet.id,
       JSON.stringify(alert.tweet),

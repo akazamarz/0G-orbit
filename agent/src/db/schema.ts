@@ -1,5 +1,5 @@
 export const SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS subscriptions (
+CREATE TABLE IF NOT EXISTS orbits (
   id TEXT PRIMARY KEY,
   wallet TEXT NOT NULL,
   source TEXT NOT NULL DEFAULT 'custom',
@@ -21,15 +21,15 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 
 CREATE TABLE IF NOT EXISTS seen_tweets (
-  subscription_id TEXT NOT NULL,
+  orbit_id TEXT NOT NULL,
   tweet_id TEXT NOT NULL,
   seen_at INTEGER NOT NULL,
-  PRIMARY KEY (subscription_id, tweet_id)
+  PRIMARY KEY (orbit_id, tweet_id)
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
   id TEXT PRIMARY KEY,
-  subscription_id TEXT NOT NULL,
+  orbit_id TEXT NOT NULL,
   wallet TEXT NOT NULL,
   tweet_id TEXT NOT NULL,
   tweet_json TEXT NOT NULL,
@@ -82,12 +82,10 @@ CREATE TABLE IF NOT EXISTS pending_attestations (
   attested_at INTEGER
 );
 
-CREATE INDEX IF NOT EXISTS idx_subscriptions_wallet ON subscriptions(wallet);
+CREATE INDEX IF NOT EXISTS idx_orbits_wallet ON orbits(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
-CREATE INDEX IF NOT EXISTS idx_alerts_subscription ON alerts(subscription_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet_created ON alerts(wallet, created_at);
-CREATE INDEX IF NOT EXISTS idx_alerts_sub_created ON alerts(subscription_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_feedback_alert ON feedback(alert_id);
 CREATE INDEX IF NOT EXISTS idx_pending_wallet ON pending_attestations(wallet);
 CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_attestations(status);

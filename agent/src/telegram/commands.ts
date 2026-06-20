@@ -1,6 +1,6 @@
 import type { Bot, Context } from "grammy";
 import { getDb } from "../db/client.js";
-import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
+import { pauseOrbit, resumeOrbit } from "../orbits/scheduler.js";
 import { getWalletByChatId } from "./wallet.js";
 import {
   decodeCallbackData,
@@ -36,14 +36,14 @@ interface OrbitRow {
 function listOrbits(wallet: string): OrbitRow[] {
   return getDb()
     .prepare(
-      "SELECT id, title, paused, notify_telegram FROM subscriptions WHERE wallet = ? ORDER BY created_at DESC",
+      "SELECT id, title, paused, notify_telegram FROM orbits WHERE wallet = ? ORDER BY created_at DESC",
     )
     .all(wallet) as OrbitRow[];
 }
 
 function getOrbit(wallet: string, orbitId: string): { id: string; title: string; paused: number } | null {
   const row = getDb()
-    .prepare("SELECT id, title, paused FROM subscriptions WHERE id = ? AND wallet = ?")
+    .prepare("SELECT id, title, paused FROM orbits WHERE id = ? AND wallet = ?")
     .get(orbitId, wallet) as { id: string; title: string; paused: number } | undefined;
   return row ?? null;
 }
@@ -83,8 +83,8 @@ async function handleOrbitCallback(ctx: Context, action: string, orbitId: string
       await ctx.answerCallbackQuery({ text: `${orbit.title} is already paused.` });
       return;
     }
-    getDb().prepare("UPDATE subscriptions SET paused = 1, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
-    pauseSubscription(orbit.id);
+    getDb().prepare("UPDATE orbits SET paused = 1, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
+    pauseOrbit(orbit.id);
     await ctx.answerCallbackQuery({ text: `Paused: ${orbit.title}` });
     await ctx.editMessageText(pauseSuccessMessage(orbit.title), HTML_REPLY);
     return;
@@ -94,8 +94,8 @@ async function handleOrbitCallback(ctx: Context, action: string, orbitId: string
     await ctx.answerCallbackQuery({ text: `${orbit.title} is already active.` });
     return;
   }
-  getDb().prepare("UPDATE subscriptions SET paused = 0, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
-  resumeSubscription(orbit.id);
+  getDb().prepare("UPDATE orbits SET paused = 0, updated_at = ? WHERE id = ?").run(Date.now(), orbit.id);
+  resumeOrbit(orbit.id);
   await ctx.answerCallbackQuery({ text: `Resumed: ${orbit.title}` });
   await ctx.editMessageText(resumeSuccessMessage(orbit.title), HTML_REPLY);
 }

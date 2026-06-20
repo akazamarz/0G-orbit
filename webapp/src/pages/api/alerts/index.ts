@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const params = new URLSearchParams();
     const limit = req.query.limit;
     if (limit != null && limit !== "") params.set("limit", String(limit));
-    if (req.query.subscriptionId) params.set("subscriptionId", String(req.query.subscriptionId));
+    if (req.query.orbitId) params.set("orbitId", String(req.query.orbitId));
     if (req.query.before) params.set("before", String(req.query.before));
     if (req.query.after) params.set("after", String(req.query.after));
 

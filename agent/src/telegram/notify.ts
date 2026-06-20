@@ -1,6 +1,6 @@
 import { getDb } from "../db/client.js";
 import type { Alert } from "@orbit/shared";
-import { getSubscription } from "../orbits/repository.js";
+import { getOrbit } from "../orbits/repository.js";
 import { formatAlertMessage } from "./messages.js";
 
 export interface TelegramNotifier {
@@ -19,8 +19,8 @@ async function send(chatId: number, text: string): Promise<void> {
 }
 
 export async function sendAlert(chatId: number, alert: Alert): Promise<void> {
-  const sub = getSubscription(alert.subscriptionId);
-  const text = formatAlertMessage(alert, sub?.title);
+  const orbit = getOrbit(alert.orbitId);
+  const text = formatAlertMessage(alert, orbit?.title);
   await send(chatId, text);
 }
 

@@ -5,7 +5,7 @@ import type { Alert } from "@orbit/shared";
 
 interface Props {
   alerts: Alert[];
-  /** subscriptionId → display title; when set, each card shows its orbit name */
+  /** orbitId → display title; when set, each card shows its orbit name */
   orbitTitles?: Record<string, string>;
 }
 
@@ -20,11 +20,11 @@ export function AlertList({ alerts, orbitTitles }: Props) {
   return (
     <div className={styles.list}>
       {alerts.map((a) => {
-        const orbitTitle = orbitTitles?.[a.subscriptionId];
+        const orbitTitle = orbitTitles?.[a.orbitId];
         return (
           <article key={a.id} className={styles.alert}>
             {orbitTitle ? (
-              <Link href={`/orbits/${a.subscriptionId}`} className={styles.orbitTitle}>
+              <Link href={`/orbits/${a.orbitId}`} className={styles.orbitTitle}>
                 {orbitTitle}
               </Link>
             ) : null}

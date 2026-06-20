@@ -1,9 +1,9 @@
-import type { Subscription } from "@orbit/shared";
+import type { Orbit } from "@orbit/shared";
 
-export function displayCriteria(sub: Subscription): string {
-  const upgraded = sub.upgradedCriteria?.trim();
+export function displayCriteria(orbit: Orbit): string {
+  const upgraded = orbit.upgradedCriteria?.trim();
   if (upgraded) return upgraded;
-  return sub.criteria.trim();
+  return orbit.criteria.trim();
 }
 
 export function formatWhen(ts?: number): string {

@@ -2,18 +2,18 @@ import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
 import {
   type HealthResponse,
-  type SubscriptionInput,
-  type SubscriptionUpdate,
+  type OrbitInput,
+  type OrbitUpdate,
   type FeedbackRequest,
   type SignAttestationRequest,
   type UpdateWalletTelegramRequest,
 } from "@orbit/shared";
 import {
   verifyInternalSecret,
-  handleCreateSubscription,
-  handleUpdateSubscription,
-  handleDeleteSubscription,
-  handleListSubscriptions,
+  handleCreateOrbit,
+  handleUpdateOrbit,
+  handleDeleteOrbit,
+  handleListOrbits,
   listAlertFeed,
   parseAlertCursor,
   recordFeedback,
@@ -41,37 +41,37 @@ app.get("/internal/health", (c) => {
   const res: HealthResponse = {
     status: "ok",
     uptime: Date.now() - startedAt,
-    subscriptions: 0,
+    orbits: 0,
     version: "0.1.0",
   };
   return c.json(res);
 });
 
-app.post("/internal/subscriptions", secretMiddleware, async (c) => {
-  const body = (await c.req.json()) as SubscriptionInput;
-  const sub = await handleCreateSubscription(body);
-  return c.json(sub, 201);
+app.post("/internal/orbits", secretMiddleware, async (c) => {
+  const body = (await c.req.json()) as OrbitInput;
+  const orbit = await handleCreateOrbit(body);
+  return c.json(orbit, 201);
 });
 
-app.get("/internal/subscriptions", secretMiddleware, (c) => {
+app.get("/internal/orbits", secretMiddleware, (c) => {
   const wallet = c.req.query("wallet");
   if (!wallet) return c.json({ error: "wallet required" }, 400);
-  return c.json(handleListSubscriptions(wallet));
+  return c.json(handleListOrbits(wallet));
 });
 
-app.patch("/internal/subscriptions/:id", secretMiddleware, async (c) => {
+app.patch("/internal/orbits/:id", secretMiddleware, async (c) => {
   const id = c.req.param("id");
   if (!id) return c.json({ error: "invalid id" }, 400);
-  const body = (await c.req.json()) as SubscriptionUpdate;
-  const sub = await handleUpdateSubscription(id, body);
-  if (!sub) return c.json({ error: "not found" }, 404);
-  return c.json(sub);
+  const body = (await c.req.json()) as OrbitUpdate;
+  const orbit = await handleUpdateOrbit(id, body);
+  if (!orbit) return c.json({ error: "not found" }, 404);
+  return c.json(orbit);
 });
 
-app.delete("/internal/subscriptions/:id", secretMiddleware, (c) => {
+app.delete("/internal/orbits/:id", secretMiddleware, (c) => {
   const id = c.req.param("id");
   if (!id) return c.json({ error: "invalid id" }, 400);
-  const ok = handleDeleteSubscription(id);
+  const ok = handleDeleteOrbit(id);
   if (!ok) return c.json({ error: "not found" }, 404);
   return c.json({ ok: true });
 });
@@ -79,14 +79,14 @@ app.delete("/internal/subscriptions/:id", secretMiddleware, (c) => {
 app.get("/internal/alerts", secretMiddleware, (c) => {
   const wallet = c.req.query("wallet");
   if (!wallet) return c.json({ error: "wallet required" }, 400);
-  const subscriptionId = c.req.query("subscriptionId") || undefined;
+  const orbitId = c.req.query("orbitId") || undefined;
   const limit = Number(c.req.query("limit") ?? 20);
   const before = parseAlertCursor(c.req.query("before"));
   const after = parseAlertCursor(c.req.query("after"));
   return c.json(
     listAlertFeed({
       wallet,
-      subscriptionId,
+      orbitId,
       limit: Number.isFinite(limit) ? limit : 20,
       before,
       after,

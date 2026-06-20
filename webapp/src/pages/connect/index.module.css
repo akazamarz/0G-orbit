@@ -4,7 +4,7 @@
   gap: var(--space-3);
 }
 
-/* ── Panel (matches dashboard / subscriptions) ── */
+/* ── Panel (matches dashboard / orbits) ── */
 .panel {
   display: flex;
   flex-direction: column;

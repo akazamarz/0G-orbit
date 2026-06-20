@@ -1,24 +1,24 @@
 import styles from "./index.module.css";
-import { displayCriteria, formatWhen } from "@/lib/subscription-display";
-import type { Subscription } from "@orbit/shared";
+import { displayCriteria, formatWhen } from "@/lib/orbit-display";
+import type { Orbit } from "@orbit/shared";
 
 interface Props {
-  subscription: Subscription;
+  orbit: Orbit;
 }
 
-export function OrbitDetailsMeta({ subscription: sub }: Props) {
-  const criteria = displayCriteria(sub);
+export function OrbitDetailsMeta({ orbit }: Props) {
+  const criteria = displayCriteria(orbit);
   const showOriginalCriteria =
-    Boolean(sub.upgradedCriteria?.trim()) &&
-    sub.upgradedCriteria!.trim() !== sub.criteria.trim();
+    Boolean(orbit.upgradedCriteria?.trim()) &&
+    orbit.upgradedCriteria!.trim() !== orbit.criteria.trim();
 
   return (
     <dl className={styles.meta}>
       <div className={styles.metaRow}>
         <dt>Status</dt>
         <dd>
-          <span className={sub.paused ? styles.statusPaused : styles.statusActive}>
-            {sub.paused ? "Paused" : "Active"}
+          <span className={orbit.paused ? styles.statusPaused : styles.statusActive}>
+            {orbit.paused ? "Paused" : "Active"}
           </span>
         </dd>
       </div>
@@ -31,51 +31,51 @@ export function OrbitDetailsMeta({ subscription: sub }: Props) {
       {showOriginalCriteria ? (
         <div className={styles.metaRow}>
           <dt>Your input</dt>
-          <dd className={styles.metaMuted}>{sub.criteria.trim()}</dd>
+          <dd className={styles.metaMuted}>{orbit.criteria.trim()}</dd>
         </div>
       ) : null}
 
       <div className={styles.metaRow}>
         <dt>Source</dt>
-        <dd>{sub.source === "list" ? "X list" : "Custom topic"}</dd>
+        <dd>{orbit.source === "list" ? "X list" : "Custom topic"}</dd>
       </div>
 
-      {sub.source === "custom" && sub.topic ? (
+      {orbit.source === "custom" && orbit.topic ? (
         <div className={styles.metaRow}>
           <dt>Topic</dt>
-          <dd>{sub.topic}</dd>
+          <dd>{orbit.topic}</dd>
         </div>
       ) : null}
 
-      {sub.source === "list" && sub.listId ? (
+      {orbit.source === "list" && orbit.listId ? (
         <div className={styles.metaRow}>
           <dt>List</dt>
-          <dd className={styles.metaMono}>{sub.listId}</dd>
+          <dd className={styles.metaMono}>{orbit.listId}</dd>
         </div>
       ) : null}
 
-      {sub.generatedQuery ? (
+      {orbit.generatedQuery ? (
         <div className={styles.metaRow}>
           <dt>Search query</dt>
           <dd>
-            <code className={styles.query}>{sub.generatedQuery}</code>
+            <code className={styles.query}>{orbit.generatedQuery}</code>
           </dd>
         </div>
       ) : null}
 
       <div className={styles.metaRow}>
         <dt>Alerts</dt>
-        <dd>{sub.notifyTelegram ? "Telegram + dashboard" : "Dashboard only"}</dd>
+        <dd>{orbit.notifyTelegram ? "Telegram + dashboard" : "Dashboard only"}</dd>
       </div>
 
       <div className={styles.metaRow}>
         <dt>Last polled</dt>
-        <dd>{formatWhen(sub.lastPolledAt)}</dd>
+        <dd>{formatWhen(orbit.lastPolledAt)}</dd>
       </div>
 
       <div className={styles.metaRow}>
         <dt>Created</dt>
-        <dd>{formatWhen(sub.createdAt)}</dd>
+        <dd>{formatWhen(orbit.createdAt)}</dd>
       </div>
     </dl>
   );

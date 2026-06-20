@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSessionFromCookies } from "@/lib/auth";
 import { agentFetch } from "@/lib/agent-client";
-import type { Subscription, SubscriptionUpdate } from "@orbit/shared";
+import type { Orbit, OrbitUpdate } from "@orbit/shared";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = getSessionFromCookies(req.headers.cookie);
@@ -11,17 +11,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === "PATCH") {
-      const body = req.body as SubscriptionUpdate;
-      const sub = await agentFetch<Subscription>(`/internal/subscriptions/${id}`, {
+      const body = req.body as OrbitUpdate;
+      const orbit = await agentFetch<Orbit>(`/internal/orbits/${id}`, {
         method: "PATCH",
         body,
         wallet: session.wallet,
       });
-      return res.status(200).json(sub);
+      return res.status(200).json(orbit);
     }
 
     if (req.method === "DELETE") {
-      await agentFetch<{ ok: boolean }>(`/internal/subscriptions/${id}`, {
+      await agentFetch<{ ok: boolean }>(`/internal/orbits/${id}`, {
         method: "DELETE",
         wallet: session.wallet,
       });

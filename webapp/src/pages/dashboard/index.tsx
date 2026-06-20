@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
-import { SubscriptionCard } from "@/components/SubscriptionCard";
+import { OrbitCard } from "@/components/OrbitCard";
 import { AlertList } from "@/components/AlertList";
 import { AlertFeedFooter } from "@/components/AlertFeedFooter";
 import { Loading } from "@/components/Loading";
@@ -12,7 +12,7 @@ import { useSession } from "@/hooks/useSession";
 import { useAlertFeed } from "@/hooks/useAlertFeed";
 import { useToast } from "@/components/Toast";
 import styles from "./index.module.css";
-import type { Subscription, PendingAttestation, EIP712Domain } from "@orbit/shared";
+import type { Orbit, PendingAttestation, EIP712Domain } from "@orbit/shared";
 
 const PendingAttestations = dynamic(
   () => import("@/components/PendingAttestations").then((m) => m.PendingAttestations),
@@ -22,7 +22,7 @@ const PendingAttestations = dynamic(
 export default function Dashboard() {
   const { loading: sessionLoading, isAuthed } = useSession();
   const { toast } = useToast();
-  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [orbits, setOrbits] = useState<Orbit[]>([]);
   const [pendingAtts, setPendingAtts] = useState<PendingAttestation[]>([]);
   const [domain, setDomain] = useState<EIP712Domain | null>(null);
   const [subsLoading, setSubsLoading] = useState(false);
@@ -69,10 +69,10 @@ export default function Dashboard() {
         if (!r.ok) throw new Error((data as { error?: string }).error ?? "Failed to load orbits");
         return data;
       })
-      .then((s) => setSubs(Array.isArray(s) ? s : []))
+      .then((s) => setOrbits(Array.isArray(s) ? s : []))
       .catch((err) => {
         toast((err as Error).message, "error");
-        setSubs([]);
+        setOrbits([]);
       })
       .finally(() => setSubsLoading(false));
     fetchPending();
@@ -81,10 +81,10 @@ export default function Dashboard() {
   }, [isAuthed, fetchPending, toast]);
 
   const pendingCount = pendingAtts.filter((p) => p.status === "pending").length;
-  const activeOrbits = subs.filter((s) => !s.paused).length;
+  const activeOrbits = orbits.filter((o) => !o.paused).length;
   const orbitTitles = useMemo(
-    () => Object.fromEntries(subs.map((s) => [s.id, s.title])),
-    [subs],
+    () => Object.fromEntries(orbits.map((o) => [o.id, o.title])),
+    [orbits],
   );
 
   return (
@@ -102,10 +102,10 @@ export default function Dashboard() {
             <header className={styles.overview}>
               <div className={styles.metrics}>
                 <div className={styles.metric}>
-                  <span className={styles.metricValue}>{subs.length}</span>
+                  <span className={styles.metricValue}>{orbits.length}</span>
                   <span className={styles.metricLabel}>
-                    orbit{subs.length !== 1 ? "s" : ""}
-                    {subs.length > 0 && (
+                    orbit{orbits.length !== 1 ? "s" : ""}
+                    {orbits.length > 0 && (
                       <span className={styles.metricSub}> · {activeOrbits} active</span>
                     )}
                   </span>
@@ -148,7 +148,7 @@ export default function Dashboard() {
                   <h2 id="orbits-heading" className={styles.panelTitle}>
                     Orbits
                   </h2>
-                  {subs.length > 0 && (
+                  {orbits.length > 0 && (
                     <Link href="/orbits" className={styles.panelAddBtn}>
                       + Orbit
                     </Link>
@@ -157,7 +157,7 @@ export default function Dashboard() {
                 <div className={styles.panelBody}>
                   {subsLoading ? (
                     <Loading />
-                  ) : subs.length === 0 ? (
+                  ) : orbits.length === 0 ? (
                     <div className={styles.panelEmpty}>
                       <span className={styles.panelEmptyIcon} aria-hidden>
                         ◯
@@ -177,8 +177,8 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className={styles.orbitList}>
-                      {subs.map((s) => (
-                        <SubscriptionCard key={s.id} subscription={s} />
+                      {orbits.map((o) => (
+                        <OrbitCard key={o.id} orbit={o} />
                       ))}
                     </div>
                   )}

@@ -3,7 +3,7 @@ import type { Alert, AlertCursor, AlertFeedResponse } from "@orbit/shared";
 
 export interface ListAlertFeedParams {
   wallet: string;
-  subscriptionId?: string;
+  orbitId?: string;
   limit?: number;
   before?: AlertCursor;
   after?: AlertCursor;
@@ -14,7 +14,7 @@ const MAX_LIMIT = 50;
 function rowToAlert(row: Record<string, unknown>): Alert {
   return {
     id: String(row.id),
-    subscriptionId: String(row.subscription_id),
+    orbitId: String(row.orbit_id),
     wallet: String(row.wallet),
     tweet: JSON.parse(String(row.tweet_json)),
     summary: String(row.summary),
@@ -36,11 +36,11 @@ export function parseAlertCursor(raw: string | undefined): AlertCursor | undefin
   return { createdAt, id };
 }
 
-export function countAlerts(wallet: string, subscriptionId?: string): number {
-  if (subscriptionId) {
+export function countAlerts(wallet: string, orbitId?: string): number {
+  if (orbitId) {
     const row = getDb()
-      .prepare("SELECT COUNT(*) AS c FROM alerts WHERE wallet = ? AND subscription_id = ?")
-      .get(wallet, subscriptionId) as { c: number };
+      .prepare("SELECT COUNT(*) AS c FROM alerts WHERE wallet = ? AND orbit_id = ?")
+      .get(wallet, orbitId) as { c: number };
     return Number(row.c);
   }
   const row = getDb()
@@ -56,9 +56,9 @@ export function listAlertFeed(params: ListAlertFeedParams): AlertFeedResponse {
   const conditions: string[] = ["wallet = ?"];
   const bindings: unknown[] = [params.wallet];
 
-  if (params.subscriptionId) {
-    conditions.push("subscription_id = ?");
-    bindings.push(params.subscriptionId);
+  if (params.orbitId) {
+    conditions.push("orbit_id = ?");
+    bindings.push(params.orbitId);
   }
 
   if (params.before) {
@@ -87,6 +87,6 @@ export function listAlertFeed(params: ListAlertFeedParams): AlertFeedResponse {
     items,
     nextCursor,
     hasMore,
-    total: countAlerts(params.wallet, params.subscriptionId),
+    total: countAlerts(params.wallet, params.orbitId),
   };
 }

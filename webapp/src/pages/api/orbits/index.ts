@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSessionFromCookies } from "@/lib/auth";
 import { agentFetch } from "@/lib/agent-client";
-import type { Subscription, SubscriptionInput } from "@orbit/shared";
+import type { Orbit, OrbitInput } from "@orbit/shared";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = getSessionFromCookies(req.headers.cookie);
@@ -9,20 +9,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === "POST") {
-      const body = req.body as SubscriptionInput;
-      const sub = await agentFetch<Subscription>("/internal/subscriptions", {
+      const body = req.body as OrbitInput;
+      const orbit = await agentFetch<Orbit>("/internal/orbits", {
         method: "POST",
         body: { ...body, wallet: session.wallet },
         wallet: session.wallet,
       });
-      return res.status(201).json(sub);
+      return res.status(201).json(orbit);
     }
 
     if (req.method === "GET") {
-      const subs = await agentFetch<Subscription[]>("/internal/subscriptions", {
+      const orbits = await agentFetch<Orbit[]>("/internal/orbits", {
         wallet: session.wallet,
       });
-      return res.status(200).json(subs);
+      return res.status(200).json(orbits);
     }
 
     return res.status(405).json({ error: "method not allowed" });

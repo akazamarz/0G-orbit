@@ -1,26 +1,26 @@
 import Link from "next/link";
 import styles from "./index.module.css";
-import type { Subscription } from "@orbit/shared";
+import type { Orbit } from "@orbit/shared";
 
 interface Props {
-  subscription: Subscription;
+  orbit: Orbit;
 }
 
-function displayCriteria(subscription: Subscription): string {
-  const upgraded = subscription.upgradedCriteria?.trim();
+function displayCriteria(orbit: Orbit): string {
+  const upgraded = orbit.upgradedCriteria?.trim();
   if (upgraded) return upgraded;
-  return subscription.criteria.trim();
+  return orbit.criteria.trim();
 }
 
-export function SubscriptionCard({ subscription }: Props) {
-  const criteria = displayCriteria(subscription);
+export function OrbitCard({ orbit }: Props) {
+  const criteria = displayCriteria(orbit);
 
   return (
-    <Link href={`/orbits/${subscription.id}`} className={styles.card}>
+    <Link href={`/orbits/${orbit.id}`} className={styles.card}>
       <div className={styles.main}>
         <div className={styles.header}>
-          <span className={styles.title}>{subscription.title}</span>
-          {subscription.paused && (
+          <span className={styles.title}>{orbit.title}</span>
+          {orbit.paused && (
             <span className={`${styles.badge} ${styles.paused}`}>Paused</span>
           )}
         </div>

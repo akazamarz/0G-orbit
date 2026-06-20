@@ -1,12 +1,12 @@
 export {
-  createSubscription,
-  getSubscription,
-  listSubscriptions,
-  updateSubscription,
-  deleteSubscription,
-  getActiveSubscriptions,
-  markSubscriptionPolled,
+  createOrbit,
+  getOrbit,
+  listOrbits,
+  updateOrbit,
+  deleteOrbit,
+  getActiveOrbits,
+  markOrbitPolled,
   getUpgradedCriteria,
 } from "./repository.js";
-export { runSubscription } from "./runner.js";
-export { startScheduler, stopScheduler, pauseSubscription, resumeSubscription } from "./scheduler.js";
+export { runOrbit } from "./runner.js";
+export { startScheduler, stopScheduler, pauseOrbit, resumeOrbit } from "./scheduler.js";

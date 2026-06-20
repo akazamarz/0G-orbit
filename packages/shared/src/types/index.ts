@@ -2,7 +2,7 @@ export type TrackSource = "list" | "custom";
 
 export type FeedbackRating = "up" | "down";
 
-export interface Subscription {
+export interface Orbit {
   id: string;
   wallet: string;
   source: TrackSource;
@@ -25,7 +25,7 @@ export interface Subscription {
   updatedAt: number;
 }
 
-export interface SubscriptionInput {
+export interface OrbitInput {
   wallet: string;
   source: TrackSource;
   title: string;
@@ -37,7 +37,7 @@ export interface SubscriptionInput {
   pollIntervalMs?: number;
 }
 
-export interface SubscriptionUpdate {
+export interface OrbitUpdate {
   title?: string;
   topic?: string;
   criteria?: string;
@@ -66,7 +66,7 @@ export interface ScoredTweet extends Tweet {
 
 export interface Alert {
   id: string;
-  subscriptionId: string;
+  orbitId: string;
   wallet: string;
   tweet: Tweet;
   summary: string;
@@ -79,7 +79,7 @@ export interface Alert {
 
 export interface AlertDigest {
   id: string;
-  subscriptionId: string;
+  orbitId: string;
   wallet: string;
   alerts: Alert[];
   briefing: string;
@@ -150,7 +150,7 @@ export interface AlertCursor {
 
 export interface AlertQuery {
   wallet: string;
-  subscriptionId?: string;
+  orbitId?: string;
   limit?: number;
   before?: AlertCursor;
   after?: AlertCursor;
@@ -229,6 +229,6 @@ export interface SignAttestationRequest {
 export interface HealthResponse {
   status: "ok" | "degraded";
   uptime: number;
-  subscriptions: number;
+  orbits: number;
   version: string;
 }

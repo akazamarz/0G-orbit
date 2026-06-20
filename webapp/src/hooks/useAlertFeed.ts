@@ -5,7 +5,7 @@ import type { Alert, AlertCursor, AlertFeedResponse } from "@orbit/shared";
 const DEFAULT_PAGE_SIZE = 20;
 
 interface Options {
-  subscriptionId?: string;
+  orbitId?: string;
   pageSize?: number;
   pollIntervalMs?: number;
   enabled?: boolean;
@@ -36,7 +36,7 @@ async function fetchAlertFeed(query: Record<string, string>): Promise<AlertFeedR
 }
 
 export function useAlertFeed({
-  subscriptionId,
+  orbitId,
   pageSize = DEFAULT_PAGE_SIZE,
   pollIntervalMs,
   enabled = true,
@@ -64,9 +64,9 @@ export function useAlertFeed({
 
   const baseQuery = useCallback((): Record<string, string> => {
     const q: Record<string, string> = { limit: String(pageSize) };
-    if (subscriptionId) q.subscriptionId = subscriptionId;
+    if (orbitId) q.orbitId = orbitId;
     return q;
-  }, [pageSize, subscriptionId]);
+  }, [pageSize, orbitId]);
 
   const loadInitial = useCallback(async () => {
     setLoading(true);

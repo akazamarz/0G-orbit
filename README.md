@@ -63,7 +63,7 @@ orbit/
 │   │   ├── ai/              # DeepSeek client (OpenAI-compatible)
 │   │   ├── db/              # SQLite (better-sqlite3)
 │   │   ├── internal-api/    # Hono server, handler logic
-│   │   ├── orbits/          # Subscription CRUD, polling runner, scheduler
+│   │   ├── orbits/          # Orbit CRUD, polling runner, scheduler
 │   │   ├── telegram/        # grammy bot, commands, notifications
 │   │   ├── x/               # twitterapi.io client, dedup, templates
 │   │   └── utils/           # logger, errors, retry

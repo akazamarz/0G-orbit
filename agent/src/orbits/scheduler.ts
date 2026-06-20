@@ -1,6 +1,6 @@
 import { loadConfig } from "@orbit/shared";
-import { getActiveSubscriptions } from "./repository.js";
-import { runSubscription } from "./runner.js";
+import { getActiveOrbits } from "./repository.js";
+import { runOrbit } from "./runner.js";
 import { logger } from "../utils/logger.js";
 
 let cycleTimer: NodeJS.Timeout | null = null;
@@ -13,15 +13,15 @@ async function runGlobalPollCycle(): Promise<void> {
   }
 
   cycleRunning = true;
-  const subs = getActiveSubscriptions();
-  logger.info({ count: subs.length }, "global poll cycle started");
+  const orbits = getActiveOrbits();
+  logger.info({ count: orbits.length }, "global poll cycle started");
 
   try {
-    for (const sub of subs) {
+    for (const orbit of orbits) {
       try {
-        await runSubscription(sub.id);
+        await runOrbit(orbit.id);
       } catch (err) {
-        logger.error({ err, subId: sub.id }, "orbit poll failed");
+        logger.error({ err, orbitId: orbit.id }, "orbit poll failed");
       }
     }
   } finally {
@@ -39,11 +39,11 @@ export function startScheduler(): void {
   logger.info({ intervalMs }, "global poll scheduler started");
 }
 
-export function pauseSubscription(_id: string): void {
-  // Paused orbits are excluded from getActiveSubscriptions().
+export function pauseOrbit(_id: string): void {
+  // Paused orbits are excluded from getActiveOrbits().
 }
 
-export function resumeSubscription(_id: string): void {
+export function resumeOrbit(_id: string): void {
   // Resumed orbits are picked up on the next global cycle.
 }
 

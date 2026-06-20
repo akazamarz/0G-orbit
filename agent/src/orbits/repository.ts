@@ -2,16 +2,16 @@ import { randomUUID } from "node:crypto";
 import { parseListId, loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
-import type { Subscription, SubscriptionInput, SubscriptionUpdate, TrackSource } from "@orbit/shared";
+import type { Orbit, OrbitInput, OrbitUpdate, TrackSource } from "@orbit/shared";
 import {
   trackToQuery,
   upgradeOrbitIntent,
   fallbackUpgradedCriteria,
 } from "../ai/client.js";
 import { sanitizeSearchQuery, stripTimeBounds } from "../x/query.js";
-import { subscriptionColumnNames } from "../db/migrate.js";
+import { orbitColumnNames } from "../db/migrate.js";
 
-function rowToSub(row: Record<string, unknown>): Subscription {
+function rowToOrbit(row: Record<string, unknown>): Orbit {
   return {
     id: String(row.id),
     wallet: String(row.wallet),
@@ -56,14 +56,14 @@ async function resolveGeneratedQuery(
   return sanitizeSearchQuery(stripTimeBounds(query));
 }
 
-function resolveListId(input: SubscriptionInput): string | undefined {
+function resolveListId(input: OrbitInput): string | undefined {
   if (input.source !== "list") return undefined;
   const listId = input.listId ? parseListId(input.listId) : null;
   if (!listId) throw new Error("invalid X list URL or ID");
   return listId;
 }
 
-interface NewSubscriptionRow {
+interface NewOrbitRow {
   id: string;
   wallet: string;
   source: TrackSource;
@@ -80,9 +80,9 @@ interface NewSubscriptionRow {
   updatedAt: number;
 }
 
-function insertSubscriptionRow(row: NewSubscriptionRow): void {
+function insertOrbitRow(row: NewOrbitRow): void {
   const db = getDb();
-  const cols = subscriptionColumnNames(db);
+  const cols = orbitColumnNames(db);
 
   const data: Record<string, unknown> = {
     id: row.id,
@@ -118,10 +118,10 @@ function insertSubscriptionRow(row: NewSubscriptionRow): void {
   const values = keys.map((key) => data[key]);
   const placeholders = keys.map(() => "?").join(", ");
 
-  db.prepare(`INSERT INTO subscriptions (${keys.join(", ")}) VALUES (${placeholders})`).run(...values);
+  db.prepare(`INSERT INTO orbits (${keys.join(", ")}) VALUES (${placeholders})`).run(...values);
 }
 
-export async function createSubscription(input: SubscriptionInput): Promise<Subscription> {
+export async function createOrbit(input: OrbitInput): Promise<Orbit> {
   const listId = resolveListId(input);
   const topic = input.source === "custom" ? (input.topic?.trim() || input.title.trim()) : undefined;
   const upgradedCriteria = await buildUpgradedCriteria({
@@ -136,7 +136,7 @@ export async function createSubscription(input: SubscriptionInput): Promise<Subs
   const id = randomUUID();
   const now = Date.now();
 
-  insertSubscriptionRow({
+  insertOrbitRow({
     id,
     wallet: input.wallet,
     source: input.source,
@@ -153,26 +153,26 @@ export async function createSubscription(input: SubscriptionInput): Promise<Subs
     updatedAt: now,
   });
 
-  logger.info({ id, wallet: input.wallet, source: input.source, query: generatedQuery, listId }, "subscription created");
-  return getSubscription(id)!;
+  logger.info({ id, wallet: input.wallet, source: input.source, query: generatedQuery, listId }, "orbit created");
+  return getOrbit(id)!;
 }
 
-export function getSubscription(id: string): Subscription | null {
-  const row = getDb().prepare("SELECT * FROM subscriptions WHERE id = ?").get(id) as
+export function getOrbit(id: string): Orbit | null {
+  const row = getDb().prepare("SELECT * FROM orbits WHERE id = ?").get(id) as
     | Record<string, unknown>
     | undefined;
-  return row ? rowToSub(row) : null;
+  return row ? rowToOrbit(row) : null;
 }
 
-export function listSubscriptions(wallet: string): Subscription[] {
+export function listOrbits(wallet: string): Orbit[] {
   const rows = getDb()
-    .prepare("SELECT * FROM subscriptions WHERE wallet = ? ORDER BY created_at DESC")
+    .prepare("SELECT * FROM orbits WHERE wallet = ? ORDER BY created_at DESC")
     .all(wallet) as Record<string, unknown>[];
-  return rows.map(rowToSub);
+  return rows.map(rowToOrbit);
 }
 
-export async function updateSubscription(id: string, update: SubscriptionUpdate): Promise<Subscription | null> {
-  const current = getSubscription(id);
+export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbit | null> {
+  const current = getOrbit(id);
   if (!current) return null;
 
   const title = update.title?.trim() ?? current.title;
@@ -207,7 +207,7 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
   const now = Date.now();
   getDb()
     .prepare(
-      `UPDATE subscriptions SET
+      `UPDATE orbits SET
         title = ?, topic = ?, criteria = ?, upgraded_criteria = ?, list_id = ?, notify_telegram = ?,
         generated_query = ?, query_version = ?, paused = ?, poll_interval_ms = ?, updated_at = ?
        WHERE id = ?`,
@@ -226,32 +226,32 @@ export async function updateSubscription(id: string, update: SubscriptionUpdate)
       now,
       id,
     );
-  return getSubscription(id);
+  return getOrbit(id);
 }
 
-export function deleteSubscription(id: string): boolean {
-  const info = getDb().prepare("DELETE FROM subscriptions WHERE id = ?").run(id);
+export function deleteOrbit(id: string): boolean {
+  const info = getDb().prepare("DELETE FROM orbits WHERE id = ?").run(id);
   return info.changes > 0;
 }
 
 /** Active orbits queued oldest-poll-first (never-polled first). */
-export function getActiveSubscriptions(): Subscription[] {
+export function getActiveOrbits(): Orbit[] {
   const rows = getDb()
     .prepare(
-      `SELECT * FROM subscriptions WHERE paused = 0
+      `SELECT * FROM orbits WHERE paused = 0
        ORDER BY last_polled_at IS NULL DESC, last_polled_at ASC, created_at ASC`,
     )
     .all() as Record<string, unknown>[];
-  return rows.map(rowToSub);
+  return rows.map(rowToOrbit);
 }
 
-export function markSubscriptionPolled(id: string, polledAt: number): void {
+export function markOrbitPolled(id: string, polledAt: number): void {
   getDb()
-    .prepare("UPDATE subscriptions SET last_polled_at = ?, updated_at = ? WHERE id = ?")
+    .prepare("UPDATE orbits SET last_polled_at = ?, updated_at = ? WHERE id = ?")
     .run(polledAt, polledAt, id);
 }
 
-export function getUpgradedCriteria(sub: Subscription): string {
-  if (sub.upgradedCriteria?.trim()) return sub.upgradedCriteria.trim();
-  return fallbackUpgradedCriteria(sub.title, sub.topic, sub.criteria);
+export function getUpgradedCriteria(orbit: Orbit): string {
+  if (orbit.upgradedCriteria?.trim()) return orbit.upgradedCriteria.trim();
+  return fallbackUpgradedCriteria(orbit.title, orbit.topic, orbit.criteria);
 }

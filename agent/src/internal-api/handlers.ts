@@ -3,9 +3,9 @@ import { loadConfig } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import type {
   Feedback,
-  Subscription,
-  SubscriptionInput,
-  SubscriptionUpdate,
+  Orbit,
+  OrbitInput,
+  OrbitUpdate,
   AttestationData,
   PendingAttestationsResponse,
   SignAttestationRequest,
@@ -13,13 +13,13 @@ import type {
   WalletTelegramStatus,
 } from "@orbit/shared";
 import {
-  createSubscription,
-  deleteSubscription,
-  listSubscriptions,
-  updateSubscription,
+  createOrbit,
+  deleteOrbit,
+  listOrbits,
+  updateOrbit,
 } from "../orbits/repository.js";
 import { listAlertFeed } from "../alerts/repository.js";
-import { pauseSubscription, resumeSubscription } from "../orbits/scheduler.js";
+import { pauseOrbit, resumeOrbit } from "../orbits/scheduler.js";
 import { createLinkNonce } from "../telegram/notify.js";
 import {
   getWalletTelegramStatus,
@@ -39,27 +39,27 @@ export function recordFeedback(wallet: string, alertId: string, rating: "up" | "
   return { id, alertId, wallet, rating, createdAt: Date.now() };
 }
 
-export function handleCreateSubscription(input: SubscriptionInput): Promise<Subscription> {
-  return createSubscription(input);
+export function handleCreateOrbit(input: OrbitInput): Promise<Orbit> {
+  return createOrbit(input);
 }
 
-export async function handleUpdateSubscription(
+export async function handleUpdateOrbit(
   id: string,
-  update: SubscriptionUpdate,
-): Promise<Subscription | null> {
-  const updated = await updateSubscription(id, update);
-  if (updated && update.paused === true) pauseSubscription(id);
-  if (updated && update.paused === false) resumeSubscription(id);
+  update: OrbitUpdate,
+): Promise<Orbit | null> {
+  const updated = await updateOrbit(id, update);
+  if (updated && update.paused === true) pauseOrbit(id);
+  if (updated && update.paused === false) resumeOrbit(id);
   return updated;
 }
 
-export function handleDeleteSubscription(id: string): boolean {
-  pauseSubscription(id);
-  return deleteSubscription(id);
+export function handleDeleteOrbit(id: string): boolean {
+  pauseOrbit(id);
+  return deleteOrbit(id);
 }
 
-export function handleListSubscriptions(wallet: string): Subscription[] {
-  return listSubscriptions(wallet);
+export function handleListOrbits(wallet: string): Orbit[] {
+  return listOrbits(wallet);
 }
 
 export function handleCreateTelegramLink(wallet: string): { nonce: string; deeplink: string } {

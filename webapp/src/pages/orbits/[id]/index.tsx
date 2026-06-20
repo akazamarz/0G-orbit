@@ -9,12 +9,12 @@ import { Loading } from "@/components/Loading";
 import { useAlertFeed } from "@/hooks/useAlertFeed";
 import { OrbitDetailsMeta } from "@/components/OrbitDetailsMeta";
 import styles from "./index.module.css";
-import type { Subscription } from "@orbit/shared";
+import type { Orbit } from "@orbit/shared";
 
-export default function SubscriptionDetail() {
+export default function OrbitDetail() {
   const { query } = useRouter();
   const { id } = query;
-  const [sub, setSub] = useState<Subscription | null>(null);
+  const [orbit, setOrbit] = useState<Orbit | null>(null);
   const orbitId = typeof id === "string" ? id : undefined;
 
   const {
@@ -25,7 +25,7 @@ export default function SubscriptionDetail() {
     loadingMore: alertsLoadingMore,
     loadMore: loadMoreAlerts,
   } = useAlertFeed({
-    subscriptionId: orbitId,
+    orbitId,
     enabled: Boolean(orbitId),
     pollIntervalMs: 15_000,
   });
@@ -34,10 +34,10 @@ export default function SubscriptionDetail() {
     if (!orbitId) return;
     void fetch("/api/orbits")
       .then((r) => r.json())
-      .then((subs: Subscription[]) => setSub(subs.find((s) => s.id === orbitId) ?? null));
+      .then((orbits: Orbit[]) => setOrbit(orbits.find((o) => o.id === orbitId) ?? null));
   }, [orbitId]);
 
-  if (!sub) {
+  if (!orbit) {
     return (
       <AppShell title="Orbit">
         <Loading />
@@ -48,22 +48,22 @@ export default function SubscriptionDetail() {
   return (
     <>
       <Head>
-        <title>{sub.title.slice(0, 40)} - Orbit</title>
+        <title>{orbit.title.slice(0, 40)} - Orbit</title>
       </Head>
-      <AppShell title={sub.title}>
+      <AppShell title={orbit.title}>
         <div className={styles.page}>
           <section className={styles.panel} aria-labelledby="details-heading">
             <div className={styles.panelHead}>
               <h2 id="details-heading" className={styles.panelTitle}>
                 Orbit details
               </h2>
-              <Link href={`/orbits?id=${sub.id}`} className={styles.panelLink}>
+              <Link href={`/orbits?id=${orbit.id}`} className={styles.panelLink}>
                 Edit orbit
               </Link>
             </div>
 
             <div className={styles.panelBody}>
-              <OrbitDetailsMeta subscription={sub} />
+              <OrbitDetailsMeta orbit={orbit} />
             </div>
           </section>
 
