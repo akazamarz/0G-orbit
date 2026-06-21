@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect, useSignMessage } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
 import { ZG_CHAIN } from "@orbit/shared";
 import { useSession } from "@/hooks/useSession";
 import { signInWithWallet } from "@/lib/siwe-client";
@@ -16,18 +16,28 @@ export function AuthButton({ onAuthed }: Props) {
   const { address, isConnected, chain } = useAccount();
   const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
+  const { switchChain, switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const { confirm } = useConfirmDialog();
   const [signing, setSigning] = useState(false);
   const wasConnected = useRef(false);
   const signingRef = useRef(false);
+  const switchingRef = useRef(false);
 
-  const wrongChain = isConnected && chain && chain.id !== ZG_CHAIN.chainId;
+  const chainKnown = !isConnected || chain != null;
+  const wrongChain = isConnected && chainKnown && chain!.id !== ZG_CHAIN.chainId;
   const sessionMatches =
     Boolean(address && sessionWallet) &&
     address!.toLowerCase() === sessionWallet!.toLowerCase();
   const needsSignIn = isConnected && address && !sessionMatches && !sessionLoading;
+  const switchingNetwork = isSwitchingChain || wrongChain;
+  const signingIn = signing || (needsSignIn && chainKnown && !wrongChain);
+
+  const rollbackToConnect = useCallback(async () => {
+    await signOut();
+    disconnect();
+  }, [signOut, disconnect]);
 
   const handleSignIn = useCallback(async () => {
     if (!address || signingRef.current || wrongChain) return false;
@@ -49,6 +59,50 @@ export function AuthButton({ onAuthed }: Props) {
       setSigning(false);
     }
   }, [address, wrongChain, signMessageAsync, refresh, onAuthed, toast]);
+
+  useEffect(() => {
+    if (!wrongChain || switchingRef.current || isSwitchingChain) return;
+
+    let cancelled = false;
+    switchingRef.current = true;
+
+    void (async () => {
+      try {
+        await switchChainAsync({ chainId: ZG_CHAIN.chainId });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = (err as Error).message?.toLowerCase() ?? "";
+        if (!msg.includes("rejected") && !msg.includes("denied")) {
+          toast(
+            `Orbit only works on ${ZG_CHAIN.name}. Approve the network switch in your wallet.`,
+            "error",
+          );
+        }
+        await rollbackToConnect();
+      } finally {
+        switchingRef.current = false;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [wrongChain, isSwitchingChain, switchChainAsync, toast, rollbackToConnect]);
+
+  useEffect(() => {
+    if (!needsSignIn || wrongChain || !chainKnown) return;
+
+    let cancelled = false;
+    void (async () => {
+      const ok = await handleSignIn();
+      if (cancelled || ok) return;
+      await rollbackToConnect();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsSignIn, wrongChain, chainKnown, handleSignIn, rollbackToConnect]);
 
   const handleDisconnect = useCallback(async () => {
     const ok = await confirm({
@@ -81,29 +135,29 @@ export function AuthButton({ onAuthed }: Props) {
 
           if (!isConnected) {
             return (
-              <button type="button" className={styles.btn} onClick={openConnectModal}>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => {
+                  switchChain({ chainId: ZG_CHAIN.chainId });
+                  openConnectModal();
+                }}
+              >
                 Connect Wallet
               </button>
             );
           }
 
-          if (sessionLoading) {
+          if (sessionLoading || !chainKnown || switchingNetwork || signingIn) {
             return (
               <button type="button" className={styles.btn} disabled>
-                …
-              </button>
-            );
-          }
-
-          if (needsSignIn) {
-            return (
-              <button
-                type="button"
-                className={styles.btn}
-                onClick={() => void handleSignIn()}
-                disabled={signing || wrongChain}
-              >
-                {signing ? "Signing…" : "Sign"}
+                {!chainKnown
+                  ? "…"
+                  : switchingNetwork
+                    ? "Switching network…"
+                    : signingIn
+                      ? "Signing…"
+                      : "…"}
               </button>
             );
           }

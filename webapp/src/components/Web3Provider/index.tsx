@@ -34,6 +34,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
+          initialChain={zgGalileo}
           theme={darkTheme({
             accentColor: "#A855F7",
             accentColorForeground: "white",

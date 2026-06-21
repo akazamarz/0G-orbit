@@ -1,3 +1,4 @@
+import { ZG_CHAIN } from "@orbit/shared";
 import styles from "./index.module.css";
 
 export function WalletRequiredState() {
@@ -8,8 +9,9 @@ export function WalletRequiredState() {
       </div>
       <h3 className={styles.title}>Connect your wallet</h3>
       <p className={styles.description}>
-        Click the Connect Wallet button - you&apos;ll be asked to sign once to verify ownership,
-        then you&apos;re in.
+        Orbit runs on {ZG_CHAIN.name}. Connect your wallet - you&apos;ll be prompted to switch
+        network if needed, then sign to verify ownership. If sign-in fails, you can connect a
+        different wallet.
       </p>
     </div>
   );
