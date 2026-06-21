@@ -16,7 +16,7 @@ export function truncateButtonLabel(label: string, fallback = "Untitled"): strin
   return text.length > BUTTON_LABEL_MAX ? `${text.slice(0, BUTTON_LABEL_MAX - 1)}…` : text;
 }
 
-/** One button per row — reusable for any picker-style keyboard. */
+/** One button per row - reusable for any picker-style keyboard. */
 export function inlineKeyboardColumn(buttons: InlineButton[]): InlineKeyboard {
   const keyboard = new InlineKeyboard();
   for (const button of buttons) {

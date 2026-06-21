@@ -39,10 +39,10 @@ export function welcomeMessage(): string {
     "3. Open the link here and tap Start",
     "",
     "<b>Commands</b>",
-    "/orbits — your orbits",
-    "/pause — stop polling",
-    "/resume — start polling",
-    "/help — full guide",
+    "/orbits - your orbits",
+    "/pause - stop polling",
+    "/resume - start polling",
+    "/help - full guide",
   ].join("\n");
 }
 
@@ -56,9 +56,9 @@ export function linkSuccessMessage(wallet: string, firstName?: string): string {
     "You'll receive alerts here when a <b>push-enabled orbit</b> finds a post on X that matches your criteria.",
     "",
     "<b>What you can do here</b>",
-    "• /orbits — see your orbits by name",
-    "• /pause — pick an orbit to stop polling",
-    "• /resume — pick a paused orbit to start again",
+    "• /orbits - see your orbits by name",
+    "• /pause - pick an orbit to stop polling",
+    "• /resume - pick a paused orbit to start again",
     "",
     "Mute all Telegram alerts or unlink anytime from <b>Alerts</b> in the Orbit app.",
   ].join("\n");
@@ -118,8 +118,8 @@ export function orbitsListMessage(orbits: OrbitRow[]): string {
     blocks.join("\n\n"),
     "",
     "<b>Manage</b>",
-    "/pause — stop polling",
-    "/resume — start polling",
+    "/pause - stop polling",
+    "/resume - start polling",
   ].join("\n");
 }
 
@@ -213,7 +213,7 @@ export function feedbackMessage(): string {
     "",
     "React to any alert message with 👍 or 👎 to help Orbit learn what signals matter to you.",
     "",
-    "Feedback applies to the specific alert you react to — not your whole orbit.",
+    "Feedback applies to the specific alert you react to - not your whole orbit.",
   ].join("\n");
 }
 
@@ -221,11 +221,11 @@ export function helpMessage(): string {
   return [
     "<b>Orbit bot commands</b>",
     "",
-    "/orbits — list orbits on your linked wallet",
-    "/pause — pick an orbit to stop polling",
-    "/resume — pick a paused orbit to resume",
-    "/feedback — how to rate alerts",
-    "/help — show this message",
+    "/orbits - list orbits on your linked wallet",
+    "/pause - pick an orbit to stop polling",
+    "/resume - pick a paused orbit to resume",
+    "/feedback - how to rate alerts",
+    "/help - show this message",
     "",
     "<b>Alerts &amp; settings</b>",
     "Manage Telegram delivery, mute all alerts, or unlink from <b>Alerts</b> in the Orbit app.",

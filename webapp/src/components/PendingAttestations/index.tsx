@@ -96,7 +96,7 @@ export function PendingAttestations({ status, onRefresh }: Props) {
       onRefresh();
 
       if (!status.domain || !isConnected) {
-        toast("Batch prepared — connect wallet and tap Attest when ready", "success");
+        toast("Batch prepared - connect wallet and tap Attest when ready", "success");
         return;
       }
 
@@ -154,13 +154,13 @@ export function PendingAttestations({ status, onRefresh }: Props) {
     displayCount === 1
       ? (
           <>
-            Alerts are already on <strong>0G Storage</strong>. Attesting is optional —{" "}
+            Alerts are already on <strong>0G Storage</strong>. Attesting is optional -{" "}
             <strong>one wallet signature</strong> records that alert on-chain via a single manifest on 0G.
           </>
         )
       : (
           <>
-            Alerts are already on <strong>0G Storage</strong>. Attesting is optional —{" "}
+            Alerts are already on <strong>0G Storage</strong>. Attesting is optional -{" "}
             <strong>one wallet signature</strong> covers all {displayCount} alerts in a single batch manifest
             on 0G.
           </>

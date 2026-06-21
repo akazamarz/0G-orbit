@@ -350,7 +350,7 @@ export default function OrbitPage() {
                         required
                       />
                       <span className={styles.fieldHint}>
-                        What Orbit searches for on X. Used to build your query — separate from the
+                        What Orbit searches for on X. Used to build your query - separate from the
                         display name.
                       </span>
                     </div>
@@ -385,7 +385,7 @@ export default function OrbitPage() {
                     <span className={styles.toggleHint}>
                       {notifyTelegram
                         ? "Matching posts also go to Telegram when linked"
-                        : "Feed only — alerts appear on your dashboard"}
+                        : "Feed only - alerts appear on your dashboard"}
                     </span>
                   </label>
 

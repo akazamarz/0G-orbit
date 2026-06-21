@@ -6,7 +6,7 @@ import styles from "./index.module.css";
 const STEPS = [
   {
     title: "Define your orbit",
-    desc: "Describe what to watch — a topic, keyword, or X list — in plain English.",
+    desc: "Describe what to watch - a topic, keyword, or X list - in plain English.",
   },
   {
     title: "AI filters the noise",
@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Orbit — X intelligence on 0G</title>
+        <title>Orbit - X intelligence on 0G</title>
         <meta
           name="description"
           content="AI-powered X monitoring with Telegram alerts, 0G Storage, and on-chain attestation on Galileo testnet."
@@ -47,7 +47,7 @@ export default function Home() {
           </h1>
           <p className={styles.subtitle}>
             Track lists and topics in plain English. AI scores what matters, delivers sharp alerts on
-            Telegram, and anchors every orbit and alert on 0G Storage — with optional on-chain proof on 0G
+            Telegram, and anchors every orbit and alert on 0G Storage - with optional on-chain proof on 0G
             Chain.
           </p>
           <div className={styles.ctas}>

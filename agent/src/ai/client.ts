@@ -137,7 +137,7 @@ function clampScore(value: unknown): number {
 
 function batchUserPrompt(upgradedCriteria: string, tweets: BatchTweetInput[]): string {
   return [
-    "User criteria (sole standard for relevance — if a tweet does not satisfy this, score 0 and no summary):",
+    "User criteria (sole standard for relevance - if a tweet does not satisfy this, score 0 and no summary):",
     upgradedCriteria,
     "",
     `Evaluate exactly ${tweets.length} tweet(s).`,

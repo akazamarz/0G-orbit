@@ -96,7 +96,7 @@ export function filterListFeedTweets(tweets: Tweet[]): Tweet[] {
   return tweets.filter((t) => t.feedType !== "reply-to-other");
 }
 
-/** Text passed to AI scoring — includes quote/RT context when present. */
+/** Text passed to AI scoring - includes quote/RT context when present. */
 export function tweetTextForEval(tweet: Tweet): string {
   if (tweet.retweetedTweet) {
     const embed = tweet.retweetedTweet;

@@ -10,7 +10,7 @@ export function stripTimeBounds(query: string): string {
     .trim();
 }
 
-/** Max words per OR segment — allows "Fable 5" / "Meta AI" but not legacy AND blobs. */
+/** Max words per OR segment - allows "Fable 5" / "Meta AI" but not legacy AND blobs. */
 const MAX_WORDS_PER_SEGMENT = 2;
 
 function isLegacySegment(segment: string): boolean {
@@ -62,7 +62,7 @@ export function formatTwitterUntil(date: Date): string {
   return `until_time:${Math.floor(date.getTime() / 1000)}`;
 }
 
-/** Base list feed query (no time bounds) — stored for display. */
+/** Base list feed query (no time bounds) - stored for display. */
 export function buildListFeedQueryBase(listId: string): string {
   return `list:${listId} (-filter:replies OR filter:self_threads) include:nativeretweets`;
 }

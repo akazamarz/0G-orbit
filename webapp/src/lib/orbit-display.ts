@@ -7,7 +7,7 @@ export function displayCriteria(orbit: Orbit): string {
 }
 
 export function formatWhen(ts?: number): string {
-  if (!ts) return "—";
+  if (!ts) return "-";
   return new Date(ts).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",

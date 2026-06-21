@@ -8,7 +8,7 @@ let cycleRunning = false;
 
 async function runGlobalPollCycle(): Promise<void> {
   if (cycleRunning) {
-    logger.warn("global poll cycle skipped — previous cycle still running");
+    logger.warn("global poll cycle skipped - previous cycle still running");
     return;
   }
 

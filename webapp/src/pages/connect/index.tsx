@@ -240,7 +240,7 @@ export default function Connect() {
                     <span className={styles.toggleHint}>
                       {status.alertsEnabled
                         ? "Push-enabled orbits deliver matching posts to your chat"
-                        : "Alerts are muted globally — feed and dashboard still work"}
+                        : "Alerts are muted globally - feed and dashboard still work"}
                     </span>
                   </label>
 
@@ -312,7 +312,7 @@ export default function Connect() {
                   </li>
                   <li className={styles.howItem}>
                     <span className={styles.howNum}>2</span>
-                    <span>Confirm the connection — your wallet is linked to that chat</span>
+                    <span>Confirm the connection - your wallet is linked to that chat</span>
                   </li>
                   <li className={styles.howItem}>
                     <span className={styles.howNum}>3</span>
