@@ -3,11 +3,11 @@
   --orbit-purple: #a855f7;
   --orbit-glow: #c084fc;
   --orbit-pink: #ec4899;
-  --deep-space: #05020d;
+  --deep-space: #000000;
 
   /* ── Surfaces ── */
   --bg: var(--deep-space);
-  --bg-elevated: #0e0918;
+  --bg-elevated: #000000;
   --bg-card: #140d22;
   --bg-glass: rgba(5, 2, 13, 0.82);
   --bg-glass-solid: rgba(12, 8, 20, 0.82);
