@@ -13,10 +13,10 @@ interface Props {
 }
 
 export function AuthButton({ onAuthed }: Props) {
-  const { address, isConnected, chain } = useAccount();
+  const { address, isConnected, chain, status } = useAccount();
   const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
-  const { switchChain, switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
+  const { switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
   const { wallet: sessionWallet, refresh, signOut, loading: sessionLoading } = useSession();
   const { toast } = useToast();
   const { confirm } = useConfirmDialog();
@@ -61,7 +61,7 @@ export function AuthButton({ onAuthed }: Props) {
   }, [address, wrongChain, signMessageAsync, refresh, onAuthed, toast]);
 
   useEffect(() => {
-    if (!wrongChain || switchingRef.current || isSwitchingChain) return;
+    if (status !== "connected" || !wrongChain || switchingRef.current || isSwitchingChain) return;
 
     let cancelled = false;
     switchingRef.current = true;
@@ -72,6 +72,7 @@ export function AuthButton({ onAuthed }: Props) {
       } catch (err) {
         if (cancelled) return;
         const msg = (err as Error).message?.toLowerCase() ?? "";
+        if (msg.includes("connector not connected")) return;
         if (!msg.includes("rejected") && !msg.includes("denied")) {
           toast(
             `Orbit only works on ${ZG_CHAIN.name}. Approve the network switch in your wallet.`,
@@ -87,7 +88,7 @@ export function AuthButton({ onAuthed }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [wrongChain, isSwitchingChain, switchChainAsync, toast, rollbackToConnect]);
+  }, [status, wrongChain, isSwitchingChain, switchChainAsync, toast, rollbackToConnect]);
 
   useEffect(() => {
     if (!needsSignIn || wrongChain || !chainKnown) return;
@@ -135,14 +136,7 @@ export function AuthButton({ onAuthed }: Props) {
 
           if (!isConnected) {
             return (
-              <button
-                type="button"
-                className={styles.btn}
-                onClick={() => {
-                  switchChain({ chainId: ZG_CHAIN.chainId });
-                  openConnectModal();
-                }}
-              >
+              <button type="button" className={styles.btn} onClick={openConnectModal}>
                 Connect Wallet
               </button>
             );

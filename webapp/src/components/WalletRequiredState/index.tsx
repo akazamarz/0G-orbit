@@ -1,11 +1,13 @@
 import { ZG_CHAIN } from "@orbit/shared";
+import { OrbitLogo } from "@/components/OrbitLogo";
 import styles from "./index.module.css";
 
 export function WalletRequiredState() {
   return (
     <div className={styles.wrap}>
-      <div className={styles.icon} aria-hidden>
-        🛰️
+      {/* 🛰️ */}
+      <div className={styles.icon}>
+        <OrbitLogo size="lg" />
       </div>
       <h3 className={styles.title}>Connect your wallet</h3>
       <p className={styles.description}>
