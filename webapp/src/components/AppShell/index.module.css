@@ -136,8 +136,9 @@
   flex: 1;
   width: 100%;
   max-width: 1100px;
-  padding: var(--space-5);
-  padding-top: calc(var(--header-height) + var(--space-5));
+  --content-gap: var(--space-5);
+  padding: var(--content-gap);
+  padding-top: calc(var(--header-height) + var(--content-gap));
 }
 
 @media (max-width: 768px) {
@@ -221,7 +222,9 @@
   }
 
   .content {
-    padding: var(--space-3);
+    --content-gap: var(--space-3);
+    padding: var(--content-gap);
+    padding-top: calc(var(--header-height) + var(--content-gap));
   }
 }
 

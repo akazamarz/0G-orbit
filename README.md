@@ -227,3 +227,11 @@ pnpm --filter @orbit/contracts deploy:testnet
 
 Set `ORBIT_ATTESTATION_ADDRESS` in `.env` on the agent server and restart pm2.
 
+cd ~/0G-orbit
+git pull
+pnpm install
+pnpm --filter @orbit/agent build
+pm2 delete orbit-agent
+pm2 start "pnpm --filter @orbit/agent start" --name orbit-agent
+pm2 save
+pm2 logs orbit-agent --lines 20
