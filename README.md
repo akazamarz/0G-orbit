@@ -1,10 +1,10 @@
 # Orbit
 
-AI-powered X (Twitter) intelligence agent with **SQLite for fast reads**, **0G Storage for durable user data**, optional on-chain attestation, DeepSeek reasoning, and Telegram alerts.
+AI-powered X (Twitter) intelligence agent with **SQLite for fast reads**, **0G Storage for durable user data**, optional on-chain attestation, LLM-powered scoring, and Telegram alerts.
 
 ## Overview
 
-Users sign in with a wallet (SIWE), create **orbits** (keyword or list feeds), and receive **alerts** when AI scores tweets above threshold. The agent polls X on a schedule, deduplicates, scores with DeepSeek, and can notify via Telegram.
+Users sign in with a wallet (SIWE), create **orbits** (keyword or list feeds), and receive **alerts** when AI scores tweets above threshold. The agent polls X on a schedule, deduplicates, scores with an LLM, and can notify via Telegram.
 
 **0G role:** orbit and alert JSON snapshots are uploaded to 0G Storage in the background (server wallet pays gas). A per-wallet **manifest** on 0G indexes those roots so data can be **restored** into a fresh SQLite database anytime.
 
@@ -50,7 +50,7 @@ Fill `.env` (validated at runtime by zod in `packages/shared`):
 
 | Variable | Purpose |
 |----------|---------|
-| `AI_API_KEY` | DeepSeek (or any OpenAI-compatible) API key |
+| `AI_API_KEY` | OpenAI-compatible LLM API key |
 | `SERVER_PRIVATE_KEY` | 0G testnet wallet — funded with gas for Storage + attestation relay |
 | `X_API_KEY` | [twitterapi.io](https://twitterapi.io) API key |
 | `TELEGRAM_BOT_TOKEN` | From [@BotFather](https://t.me/botfather) |
@@ -135,7 +135,7 @@ orbit/
 │   │   │   └── attestation.ts     # optional EIP-712 batch attestation
 │   │   ├── scripts/
 │   │   │   └── wallet-storage.ts  # hydrate / backfill / status CLI
-│   │   ├── ai/                    # DeepSeek client
+│   │   ├── ai/                    # LLM client (query gen, scoring, summaries)
 │   │   ├── db/                    # SQLite schema + migrations
 │   │   ├── internal-api/          # Hono server + handlers
 │   │   ├── orbits/                # CRUD, polling runner, scheduler
