@@ -33,21 +33,21 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          initialChain={zgGalileo}
-          theme={darkTheme({
-            accentColor: "#A855F7",
-            accentColorForeground: "white",
-            borderRadius: "small",
-            fontStack: "system",
-          })}
-        >
-          <SessionProvider>
+        <SessionProvider>
+          <RainbowKitProvider
+            initialChain={zgGalileo}
+            theme={darkTheme({
+              accentColor: "#A855F7",
+              accentColorForeground: "white",
+              borderRadius: "small",
+              fontStack: "system",
+            })}
+          >
             <ToastProvider>
               <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
             </ToastProvider>
-          </SessionProvider>
-        </RainbowKitProvider>
+          </RainbowKitProvider>
+        </SessionProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
