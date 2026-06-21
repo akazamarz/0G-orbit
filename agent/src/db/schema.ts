@@ -82,6 +82,14 @@ CREATE TABLE IF NOT EXISTS pending_attestations (
   attested_at INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS wallet_cache (
+  wallet TEXT PRIMARY KEY,
+  manifest_root TEXT,
+  manifest_sequence INTEGER NOT NULL DEFAULT 0,
+  prev_manifest_root TEXT,
+  updated_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_orbits_wallet ON orbits(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);

@@ -8,7 +8,9 @@
     "build": "tsup",
     "start": "node --env-file=../.env dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node --env-file=../.env --import tsx --test src/**/*.test.ts",
+    "wallet-storage": "node --env-file=../.env --import tsx src/scripts/wallet-storage.ts"
   },
   "dependencies": {
     "@orbit/shared": "workspace:*",

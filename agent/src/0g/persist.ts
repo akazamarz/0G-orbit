@@ -3,6 +3,7 @@ import type { Alert, Orbit } from "@orbit/shared";
 import { getDb } from "../db/client.js";
 import { logger } from "../utils/logger.js";
 import { uploadJson } from "./storage.js";
+import { scheduleWalletManifestUpdate } from "./manifest.js";
 
 const STORAGE_SCHEMA_VERSION = 1;
 
@@ -96,19 +97,23 @@ async function persistPayload(label: string, payload: unknown): Promise<{ storag
   return { storageRoot, contentHash };
 }
 
-async function persistOrbitToStorage(orbit: Orbit): Promise<void> {
+async function persistOrbitToStorage(orbit: Orbit, options?: { skipManifest?: boolean }): Promise<void> {
   const payload = buildOrbitPayload(orbit);
   const { storageRoot } = await persistPayload(`orbit-${orbit.id}`, payload);
   updateOrbitStorageRoot(orbit.id, storageRoot);
   logger.info({ orbitId: orbit.id, storageRoot }, "orbit stored on 0g");
+  if (!options?.skipManifest) scheduleWalletManifestUpdate(orbit.wallet);
 }
 
-async function persistAlertToStorage(alert: Alert): Promise<void> {
+async function persistAlertToStorage(alert: Alert, options?: { skipManifest?: boolean }): Promise<void> {
   const payload = buildAlertPayload(alert);
   const { storageRoot } = await persistPayload(`alert-${alert.id}`, payload);
   updateAlertStorageRoot(alert.id, storageRoot);
   logger.info({ alertId: alert.id, storageRoot }, "alert stored on 0g");
+  if (!options?.skipManifest) scheduleWalletManifestUpdate(alert.wallet);
 }
+
+export { persistOrbitToStorage, persistAlertToStorage };
 
 /** Fire-and-forget: SQLite is already written; 0G upload runs in background. */
 export function scheduleOrbitStorage(orbit: Orbit): void {

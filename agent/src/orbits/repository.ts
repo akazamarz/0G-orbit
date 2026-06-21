@@ -11,6 +11,7 @@ import {
 import { toEntityOrQuery, needsQueryRegeneration, buildListFeedQueryBase } from "../x/query.js";
 import { orbitColumnNames } from "../db/migrate.js";
 import { scheduleOrbitStorage } from "../0g/persist.js";
+import { scheduleWalletManifestUpdate } from "../0g/manifest.js";
 
 function rowToOrbit(row: Record<string, unknown>): Orbit {
   return {
@@ -187,6 +188,24 @@ export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbi
   const current = getOrbit(id);
   if (!current) return null;
 
+  const pauseOnly =
+    update.paused !== undefined &&
+    update.title === undefined &&
+    update.topic === undefined &&
+    update.criteria === undefined &&
+    update.listId === undefined &&
+    update.notifyTelegram === undefined &&
+    update.pollIntervalMs === undefined;
+
+  if (pauseOnly) {
+    const paused = update.paused ?? current.paused;
+    const now = Date.now();
+    getDb()
+      .prepare("UPDATE orbits SET paused = ?, updated_at = ? WHERE id = ?")
+      .run(paused ? 1 : 0, now, id);
+    return getOrbit(id);
+  }
+
   const title = update.title?.trim() ?? current.title;
   const topic =
     update.topic !== undefined ? update.topic.trim() || undefined : current.topic;
@@ -250,7 +269,11 @@ export async function updateOrbit(id: string, update: OrbitUpdate): Promise<Orbi
 }
 
 export function deleteOrbit(id: string): boolean {
+  const orbit = getOrbit(id);
   const info = getDb().prepare("DELETE FROM orbits WHERE id = ?").run(id);
+  if (info.changes > 0 && orbit) {
+    scheduleWalletManifestUpdate(orbit.wallet);
+  }
   return info.changes > 0;
 }
 

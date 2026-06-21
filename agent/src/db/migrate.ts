@@ -188,6 +188,19 @@ export function renameLegacyOrbitSchema(db: Database.Database): void {
   }
 }
 
+/** Track latest wallet manifest root on 0G for hydrate/recovery. */
+export function migrateWalletCache(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS wallet_cache (
+      wallet TEXT PRIMARY KEY,
+      manifest_root TEXT,
+      manifest_sequence INTEGER NOT NULL DEFAULT 0,
+      prev_manifest_root TEXT,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+}
+
 /** Drop legacy indexes and ensure orbit_id indexes exist. */
 export function ensureOrbitIndexes(db: Database.Database): void {
   db.exec(`

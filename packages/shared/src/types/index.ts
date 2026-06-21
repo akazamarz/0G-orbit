@@ -268,3 +268,11 @@ export interface HealthResponse {
   orbits: number;
   version: string;
 }
+
+export type {
+  WalletManifest,
+  WalletManifestOrbitEntry,
+  WalletManifestAlertEntry,
+  WalletCacheRow,
+} from "./storage";
+export { WALLET_MANIFEST_SCHEMA_VERSION } from "./storage";

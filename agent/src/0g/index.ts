@@ -7,8 +7,23 @@ export {
   buildAlertPayload,
   scheduleOrbitStorage,
   scheduleAlertStorage,
+  persistOrbitToStorage,
+  persistAlertToStorage,
 } from "./persist.js";
 export type { OrbitStoragePayload, AlertStoragePayload } from "./persist.js";
+export {
+  buildWalletManifestFromDb,
+  parseWalletManifest,
+  uploadWalletManifest,
+  scheduleWalletManifestUpdate,
+  flushWalletManifestUpdate,
+  cancelWalletManifestUpdate,
+} from "./manifest.js";
+export { getWalletCache, upsertWalletCache, listWalletsWithManifest } from "./wallet-cache.js";
+export { hydrateWallet, upsertOrbitFromStoragePayload, upsertAlertFromStoragePayload, applyWalletManifestLocally } from "./hydrate.js";
+export type { HydrateResult } from "./hydrate.js";
+export { backfillWalletStorage } from "./backfill.js";
+export type { BackfillResult } from "./backfill.js";
 export { createAttestationBatch } from "./batch.js";
 export type { AlertBatchManifest } from "./batch.js";
 export {

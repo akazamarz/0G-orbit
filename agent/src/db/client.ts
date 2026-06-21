@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadConfig } from "@orbit/shared";
 import { SCHEMA_SQL } from "./schema.js";
-import { migrateSubscriptionsTable, migrateSubscriptionTopic, migrateSubscriptionPolling, migrateWalletTelegram, migrateAlertFeedIndexes, renameLegacyOrbitSchema, ensureOrbitIndexes, dropLegacyOrbitColumns } from "./migrate.js";
+import { migrateSubscriptionsTable, migrateSubscriptionTopic, migrateSubscriptionPolling, migrateWalletTelegram, migrateWalletCache, migrateAlertFeedIndexes, renameLegacyOrbitSchema, ensureOrbitIndexes, dropLegacyOrbitColumns } from "./migrate.js";
 import { logger } from "../utils/logger.js";
 
 let db: Database.Database | null = null;
@@ -21,6 +21,7 @@ export function getDb(): Database.Database {
   migrateSubscriptionTopic(db);
   migrateSubscriptionPolling(db);
   migrateWalletTelegram(db);
+  migrateWalletCache(db);
   migrateAlertFeedIndexes(db);
   dropLegacyOrbitColumns(db);
   ensureOrbitIndexes(db);
