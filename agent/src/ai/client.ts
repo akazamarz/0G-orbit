@@ -21,6 +21,7 @@ export function getAiClient(): OpenAI {
   client = new OpenAI({
     baseURL: config.AI_BASE_URL,
     apiKey: config.AI_API_KEY,
+    fetch: globalThis.fetch,
   });
   logger.info({ baseURL: config.AI_BASE_URL }, "ai client initialized");
   return client;
